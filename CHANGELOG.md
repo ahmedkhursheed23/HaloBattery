@@ -33,6 +33,17 @@ and the project follows [Semantic Versioning](https://semver.org/).
   charging, `08` on battery), so the tray says "about NN%" rather than pretending to a
   percentage, and a reply with any other state byte or a level code above 8 is refused
   rather than shown. **Unverified** - no base station was on hand (#41).
+- **Hide a device** (#23): "Hide this device" in the menu of a device icon removes the
+  icon and stops the low battery alert for that device, for example a controller that
+  always reports 100%. "Hidden devices" lists them; a click shows one again.
+- **Rename a device**: "Rename…" opens a Windows input box. The name is used in the
+  tooltip, the menu header and the low battery alert; "Reset name" goes back to the
+  device's own name. The pictogram does not change.
+
+### Changed
+- The settings are in a **Preferences** submenu: poll interval, low battery alert,
+  Bluetooth, pictogram, charging animation, icon colour, start with Windows and the
+  update check. The main menu keeps the items used often.
 
 ### Fixed
 - **Two Logitech receivers of the same kind** (any two Unifying receivers share
@@ -62,6 +73,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
   Verified on a real Nova 7 (22A1).
 - SteelSeries: the Nova headsets are read only from their 0xFFC0 collection, not from
   whatever collection comes first on interface 3.
+- The menu header of a device said "No devices found" instead of the device and its
+  level. pystray builds the Windows menu once, before the first reading; the menu is
+  now rebuilt when the device's text changes.
 
 
 ## [1.11.0] - 2026-09-27
