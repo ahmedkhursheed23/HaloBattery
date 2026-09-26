@@ -140,17 +140,33 @@ class _Channel:
         return name, kind, unit
 
 
+def _instance(d) -> str:
+    """The receiver's device instance, taken from the HID path.
+
+    Two receivers can share a product id - every Unifying receiver is 0xC52B - so the
+    product id alone cannot tell them apart. The instance segment of the path can:
+    `\\?\HID#VID_046D&PID_C52B&MI_02#7&1234abcd&0&0000#{...}`. Not the serial number:
+    hidapi reports an empty one for the collections Windows re-parents, which would make
+    two receivers look identical again.
+    """
+    p = d.get("path") or b""
+    s = p.decode("ascii", "ignore") if isinstance(p, (bytes, bytearray)) else str(p)
+    parts = s.split("#")
+    return parts[2].lower() if len(parts) > 2 else ""
+
+
 class LogitechProvider(Provider):
     name = "logitech"
 
     def __init__(self):
         self._diag: List[str] = []
-        self._ids: Dict[Tuple[int, int], Tuple[str, str, str]] = {}   # (pid, idx) -> identity
-        self._asleep: Set[Tuple[int, int]] = set()   # paired slots that stopped answering
+        self._ids: Dict[Tuple[int, str, int], Tuple[str, str, str]] = {}   # (pid, instance, idx)
+        self._asleep: Set[Tuple[int, str, int]] = set()   # paired slots that stopped answering
         self._last: Dict[str, Tuple[DeviceStatus, float]] = {}
 
-    def _read(self, ch: _Channel, pid: int, idx: int) -> Optional[DeviceStatus]:
-        slot = (pid, idx)
+    def _read(self, ch: _Channel, pid: int, idx: int,
+              instance: str = "", multi: bool = False) -> Optional[DeviceStatus]:
+        slot = (pid, instance, idx)
         # A paired device that is asleep does not answer at all, which would cost the
         # full ping timeout on every poll (all night long). Once a slot has gone
         # silent, ping it with the short timeout until it answers again.
@@ -179,9 +195,14 @@ class LogitechProvider(Provider):
             self._diag.append(f"  idx={idx} '{name}' unit={unit or '?'} feature {feature:04x}: "
                               f"{hexdump(r, 4)} -> {level}%{' (charging)' if chg else ''}")
             if level is not None:
-                # the unit id is stable across receiver and cable and tells identical
-                # devices apart; without one, fall back to the receiver slot
-                key = f"logitech:{unit}" if unit else f"logitech:{pid:04x}:{idx}"
+                # The unit id is stable across receiver and cable and tells identical
+                # devices apart; without one, fall back to the receiver slot. Two
+                # receivers of the same kind hand out the same unit ids, so the
+                # receiver's instance joins the key only when there is more than one - a
+                # single receiver keeps the plain key, and its devices keep their icons
+                # between the receiver and the cable.
+                prefix = instance + ":" if multi else ""
+                key = f"logitech:{prefix}{unit}" if unit else f"logitech:{prefix}{pid:04x}:{idx}"
                 return DeviceStatus(key, name, level, chg, True, "logitech", kind=kind)
         self._diag.append(f"  idx={idx} '{name}': no battery feature answered")
         return None
@@ -194,18 +215,25 @@ class LogitechProvider(Provider):
             log.warning("hid.enumerate(logitech): %s", e)
             infos = []
 
-        groups: Dict[int, Dict[int, bytes]] = {}          # pid -> {usage: path}
+        # keyed by (product id, receiver instance): the product id alone merges two
+        # receivers of the same kind (any two Unifying receivers are 0xC52B) and the
+        # second one's interface paths overwrite the first one's, so the devices paired
+        # to the first receiver could never be read
+        groups: Dict[Tuple[int, str], Dict[int, bytes]] = {}
         for d in infos:
             if d.get("usage_page") == 0xFF00 and d.get("usage") in (1, 2):
-                groups.setdefault(d["product_id"], {})[d["usage"]] = d["path"]
+                groups.setdefault((d["product_id"], _instance(d)), {})[d["usage"]] = d["path"]
+        repeats = {pid for pid, _i in groups
+                   if sum(1 for p, _j in groups if p == pid) > 1}   # more than one receiver
 
         found: Dict[str, DeviceStatus] = {}
-        for pid, paths in groups.items():
+        for (pid, inst), paths in groups.items():
             if 2 not in paths:
                 continue
             product = next((d.get("product_string") or "" for d in infos if d["product_id"] == pid), "")
             receiver = "receiver" in product.lower()
-            self._diag.append(f"[Logitech] pid={pid:04x} '{product}'")
+            tag = f" instance {inst}" if pid in repeats else ""
+            self._diag.append(f"[Logitech] pid={pid:04x} '{product}'{tag}")
             try:
                 ch = _Channel(paths.get(1), paths[2])
             except (OSError, IOError) as e:
@@ -213,7 +241,7 @@ class LogitechProvider(Provider):
                 continue
             try:
                 for idx in (range(1, 7) if receiver else (0xFF,)):
-                    st = self._read(ch, pid, idx)
+                    st = self._read(ch, pid, idx, inst, pid in repeats)
                     # the same device on the cable and through the receiver: charging wins
                     if st and (st.key not in found or st.charging):
                         found[st.key] = st

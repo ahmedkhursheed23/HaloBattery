@@ -4,6 +4,17 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Two Logitech receivers of the same kind** (any two Unifying receivers share
+  `0xC52B`, and Lightspeed receivers share ids too) were merged into one group, so the
+  second receiver's interface paths overwrote the first one's and the devices paired to
+  the first receiver were never read. Receivers are now grouped by product id *and*
+  device instance, which the HID path carries; two receivers of the same kind say which
+  one they are in the diagnostics, and their devices get keys of their own. A single
+  receiver keeps the plain keys, so existing icons do not move.
+
 ## [1.11.0] - 2026-09-27
 
 ### Added
