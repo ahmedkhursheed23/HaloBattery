@@ -4,7 +4,7 @@ Supported:
   * Razer (BlackShark V2 Pro headset, mice, etc.): directly over USB/HID, no Synapse
   * Audeze Maxwell (2.4 GHz dongle or USB-C cable)
   * WLmouse (Beast X / Beast X Max / Mini Pro)
-  * Logitech (HID++ 2.0 mice and keyboards: Lightspeed / Unifying receivers, G HUB not needed)
+  * Logitech (HID++ 2.0 mice, keyboards and headsets: Lightspeed / Unifying / Bolt receivers, G HUB not needed)
   * SteelSeries (Arctis Nova 7 and Nova 5 headsets, GG not needed)
   * MCHOSE (M7 Ultra and the rest of the 0x5253 family, on the 2.4 GHz receiver)
   * Xbox-compatible controllers (Windows.Gaming.Input / XInput)

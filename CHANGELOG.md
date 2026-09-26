@@ -4,6 +4,39 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Logitech headsets: G533, G535, G633, G635, G733, G933, G935, G PRO, G PRO X and
+  G PRO X 2 (HID++ models). The app reads the battery voltage with feature 0x1F20 and
+  shows the level, charging, and "headset off". The model list comes from
+  HeadsetControl; the feature layout comes from Solaar. Not tested on these headsets.
+- Logitech receivers are also recognised by their product id (Solaar's list), not
+  only by "receiver" in the product name.
+
+### Fixed
+- **Two Logitech receivers of the same kind** (any two Unifying receivers share
+  `0xC52B`, and Lightspeed receivers share ids too) were merged into one group, so the
+  second receiver's interface paths overwrote the first one's and the devices paired to
+  the first receiver were never read. Receivers are now grouped by product id *and*
+  device instance, which the HID path carries; two receivers of the same kind say which
+  one they are in the diagnostics, and their devices get keys of their own. A single
+  receiver keeps the plain keys, so existing icons do not move.
+- Logitech: "slow charging" (status 4) now shows as charging.
+- Logitech: an error reply is accepted only when it answers our own request. Before,
+  an error reply to G HUB's request could make a mouse show as "off".
+- Logitech: the receiver's error code now tells an empty slot (08) from a device
+  that is switched off (09). When a slot becomes empty, the app forgets the old
+  device name, so a new device in that slot shows its own name.
+- Logitech: a device that reports no percentage (unified battery level 0) showed 0%
+  and could trigger the low battery alert. It now shows the approximate level from
+  the level flags ("about 50% (good)"), as Solaar does.
+- Logitech: each request now uses a different software id. A late reply to an earlier
+  request can no longer be taken as the reply to the current one.
+- Logitech: a device name that could not be read (for example just after the mouse
+  wakes up) is no longer kept until the app restarts. When the icon key of a slot
+  changes, the old icon goes away at once instead of staying grey for 5 minutes.
+
 ## [1.11.0] - 2026-09-27
 
 ### Added
