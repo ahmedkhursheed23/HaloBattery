@@ -74,11 +74,18 @@ Hover over the icon to see the exact percentage. The low battery notification fi
 
 ## Tray menu
 
-- **Refresh now**, **Poll interval** (15 s to 5 min), **Low battery alert at** (off, 10–30%)
-- **Windows Bluetooth devices**, **Device pictogram**, **Charging animation**
-- **Icon colour**: Automatic (the Windows theme, or MyDockFinder's menu bar while it is running), White or Black
-- **Start with Windows** (per-user registry key, no admin rights needed)
-- **Check for updates**: once a day, on by default; a notification and a **Download vX.Y.Z…** item appear when a new release is out
+Right-click a device icon:
+
+- **Rename…**: give the device your own name (for example, two controllers with the same name). **Reset name** goes back to the device's own name.
+- **Hide this device**: remove its icon, for example for a controller that always reports 100%.
+- **Refresh now**
+- **Preferences**:
+  - **Poll interval** (15 s to 5 min), **Low battery alert at** (off, 10–30%)
+  - **Windows Bluetooth devices**, **Device pictogram**, **Charging animation**
+  - **Icon colour**: Automatic (the Windows theme, or MyDockFinder's menu bar while it is running), White or Black
+  - **Start with Windows** (per-user registry key, no admin rights needed)
+  - **Check for updates**: once a day, on by default; a notification and a **Download vX.Y.Z…** item appear when a new release is out
+- **Hidden devices** (only when a device is hidden): click a device to show it again
 - **Diagnostics…**: writes a detailed report and opens it
 
 ## Troubleshooting
