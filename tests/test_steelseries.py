@@ -241,5 +241,30 @@ class SafetyTests(SteelSeriesTestCase):
         self.assertNotIn(0x1280, S.CLASSIC_MODELS)
 
 
+
+# ------------------------------------------------------------------ merged PRs
+@unittest.skipUnless(hasattr(S, "NOVA_PRO_MODELS"), "the Nova Pro Wireless comes with PR #43")
+class NovaProTests(SteelSeriesTestCase):
+    def test_nova_pro_reads_after_the_merge(self):
+        reply = [0x06, 0xB0, 0, 0, 0, 0, 4] + [0] * 8 + [0x08]        # level code 4, on battery
+        [st], _ = self.poll([entry(0x12E0, 4, 0xFF00, b"np")], {b"np": answer(reply, [0x06, 0xB0])})
+        self.assertEqual((st.level, st.approx), (50, "about 50%"))
+        self.assertEqual(self.bus.writes[0][1][:2], [0x06, 0xB0])
+
+
+@unittest.skipUnless(0x1838 in S.MOUSE_MODELS, "the Aerox 3 Wireless comes with PR #50")
+class Aerox3Tests(SteelSeriesTestCase):
+    def test_aerox3_reads_after_the_merge(self):
+        [st], _ = self.poll([entry(0x1838, 3, 0xFFC0, b"ax")],
+                            {b"ax": answer([0xD2, 0x80 | 11], [0x00, 0xD2])})   # step 11, charging
+        self.assertEqual((st.level, st.charging, st.kind), (50, True, "mouse"))
+
+    def test_nova7_and_aerox3_on_one_pc(self):
+        entries = [entry(0x22A1, 3, 0xFFC0, b"n7"), entry(0x1838, 3, 0xFFC0, b"ax")]
+        paths = {b"n7": answer([0xB0, 0x03, 0x49, 0x03]), b"ax": answer([0xD2, 11], [0x00, 0xD2])}
+        out, _ = self.poll(entries, paths)
+        self.assertEqual(sorted((st.name, st.level) for st in out),
+                         [("Arctis Nova 7", 73), ("SteelSeries Aerox 3 Wireless", 50)])
+
 if __name__ == "__main__":
     unittest.main()
