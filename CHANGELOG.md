@@ -18,7 +18,15 @@ and the project follows [Semantic Versioning](https://semver.org/).
     connection query from the Linux driver `hid-steelseries-arctis.c`. A reply that
     does not answer the request is never read as a level. Only vendor collections get
     a request. The Arctis Pro GameDAC is left out, because it is a wired headset.
+- SteelSeries Aerox 3 Wireless (`1038:1838`) over HID: battery and charging on the receiver's vendor protocol, next to the existing Nova headsets and alongside SteelSeries GG. **Unverified on hardware** - the interface, the `0xD2` query and the level scale come from three sources that agree on this product id (alloyctl's reverse engineering of `1038:1838`, yurtemre7/steel-mouse, and the capture notes at gort818/aerox3-wireless), but no Aerox 3 Wireless was available here. A level byte of 0 is read as off or asleep rather than empty, and a reply without the `d2` echo is refused rather than shown as a level. The CS2 Dragon Lore edition (`1038:1878`) is included untested
 
+- SteelSeries Arctis Nova Pro Wireless (base stations `1038:12E0` and `1038:12E5`),
+  ported from HeadsetControl: the same `b0` exchange as the other Nova headsets, but
+  asked for with report id `06` and read on interface 4. The level is a nine-step code
+  in byte 6 and the headset state in byte 15 (`01` off / out of range, `02` cable
+  charging, `08` on battery), so the tray says "about NN%" rather than pretending to a
+  percentage, and a reply with any other state byte or a level code above 8 is refused
+  rather than shown. **Unverified** - no base station was on hand (#41).
 ### Fixed
 - Arctis Nova 7: while the headset is off or still switching on, the dongle repeats
   the last battery level. The app showed that old level as live for a few seconds.
@@ -30,13 +38,6 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [1.11.0] - 2026-09-27
 
 ### Added
-- SteelSeries Arctis Nova Pro Wireless (base stations `1038:12E0` and `1038:12E5`),
-  ported from HeadsetControl: the same `b0` exchange as the other Nova headsets, but
-  asked for with report id `06` and read on interface 4. The level is a nine-step code
-  in byte 6 and the headset state in byte 15 (`01` off / out of range, `02` cable
-  charging, `08` on battery), so the tray says "about NN%" rather than pretending to a
-  percentage, and a reply with any other state byte or a level code above 8 is refused
-  rather than shown. **Unverified** - no base station was on hand (#41).
 - **Update check**: once a day the app asks GitHub for the latest release. When a newer
   one is out, a notification says so once, and the tray menu gets a "Download vX.Y.Z…"
   item that opens the release page. Nothing is downloaded or installed automatically,
