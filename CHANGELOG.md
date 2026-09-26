@@ -13,6 +13,26 @@ and the project follows [Semantic Versioning](https://semver.org/).
   HeadsetControl; the feature layout comes from Solaar. Not tested on these headsets.
 - Logitech receivers are also recognised by their product id (Solaar's list), not
   only by "receiver" in the product name.
+- SteelSeries: older and other Arctis headsets. Not tested on these headsets; the raw
+  replies go to the diagnostics.
+  - On the `b0` exchange (interface 3): Arctis Nova 7P, Nova 3P / 3X Wireless,
+    Arctis 7+ (and the PS5 / Xbox / Destiny editions), Arctis GameBuds.
+  - With their own requests: Arctis 1 Wireless / 7X / 7P (`06 12`), Arctis 7
+    (`06 14` then `06 18`), Arctis Pro Wireless 2019 (`06 18`), Arctis 9 (`00 20`),
+    Arctis Pro Wireless (`41 aa` then `40 aa`).
+  - Model list and layouts from HeadsetControl; the echo checks and the Arctis 7
+    connection query from the Linux driver `hid-steelseries-arctis.c`. A reply that
+    does not answer the request is never read as a level. Only vendor collections get
+    a request. The Arctis Pro GameDAC is left out, because it is a wired headset.
+- SteelSeries Aerox 3 Wireless (`1038:1838`) over HID: battery and charging on the receiver's vendor protocol, next to the existing Nova headsets and alongside SteelSeries GG. **Unverified on hardware** - the interface, the `0xD2` query and the level scale come from three sources that agree on this product id (alloyctl's reverse engineering of `1038:1838`, yurtemre7/steel-mouse, and the capture notes at gort818/aerox3-wireless), but no Aerox 3 Wireless was available here. A level byte of 0 is read as off or asleep rather than empty, and a reply without the `d2` echo is refused rather than shown as a level. The CS2 Dragon Lore edition (`1038:1878`) is included untested
+
+- SteelSeries Arctis Nova Pro Wireless (base stations `1038:12E0` and `1038:12E5`),
+  ported from HeadsetControl: the same `b0` exchange as the other Nova headsets, but
+  asked for with report id `06` and read on interface 4. The level is a nine-step code
+  in byte 6 and the headset state in byte 15 (`01` off / out of range, `02` cable
+  charging, `08` on battery), so the tray says "about NN%" rather than pretending to a
+  percentage, and a reply with any other state byte or a level code above 8 is refused
+  rather than shown. **Unverified** - no base station was on hand (#41).
 
 ### Fixed
 - **Two Logitech receivers of the same kind** (any two Unifying receivers share
@@ -36,6 +56,13 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - Logitech: a device name that could not be read (for example just after the mouse
   wakes up) is no longer kept until the app restarts. When the icon key of a slot
   changes, the old icon goes away at once instead of staying grey for 5 minutes.
+- Arctis Nova 7: while the headset is off or still switching on, the dongle repeats
+  the last battery level. The app showed that old level as live for a few seconds.
+  The link byte (byte 1: 03 = connected, 02 = not connected) is now checked too.
+  Verified on a real Nova 7 (22A1).
+- SteelSeries: the Nova headsets are read only from their 0xFFC0 collection, not from
+  whatever collection comes first on interface 3.
+
 
 ## [1.11.0] - 2026-09-27
 
