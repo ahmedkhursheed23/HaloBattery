@@ -4,7 +4,14 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.11.0.1] - 2026-09-27
+
+Test build of 1.11.0 from the fork ahmedkhursheed23/HaloBattery. It has the changes
+proposed upstream in HeyOkay/HaloBattery#59 (Logitech headsets), #60 (older SteelSeries
+Arctis), #67 (hide / rename, Preferences), and the open PRs they overlap with: #43
+(Arctis Nova Pro Wireless), #48 (two Logitech receivers, with a fix) and #50 (Aerox 3
+Wireless). Many of these models are not tested on hardware yet: a Diagnostics report
+from this build helps. Use the official releases once they include these changes.
 
 ### Added
 - Logitech headsets: G533, G535, G633, G635, G733, G933, G935, G PRO, G PRO X and
@@ -76,7 +83,6 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - The menu header of a device said "No devices found" instead of the device and its
   level. pystray builds the Windows menu once, before the first reading; the menu is
   now rebuilt when the device's text changes.
-
 
 ## [1.11.0] - 2026-09-27
 
