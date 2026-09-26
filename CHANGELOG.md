@@ -4,6 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- SteelSeries Aerox 3 Wireless (`1038:1838`) over HID: battery and charging on the receiver's vendor protocol, next to the existing Nova headsets and alongside SteelSeries GG. **Unverified on hardware** - the interface, the `0xD2` query and the level scale come from three sources that agree on this product id (alloyctl's reverse engineering of `1038:1838`, yurtemre7/steel-mouse, and the capture notes at gort818/aerox3-wireless), but no Aerox 3 Wireless was available here. A level byte of 0 is read as off or asleep rather than empty, and a reply without the `d2` echo is refused rather than shown as a level. The CS2 Dragon Lore edition (`1038:1878`) is included untested
+
 ## [1.11.0] - 2026-09-27
 
 ### Added
