@@ -15,6 +15,13 @@ and the project follows [Semantic Versioning](https://semver.org/).
   only by "receiver" in the product name.
 
 ### Fixed
+- **Two Logitech receivers of the same kind** (any two Unifying receivers share
+  `0xC52B`, and Lightspeed receivers share ids too) were merged into one group, so the
+  second receiver's interface paths overwrote the first one's and the devices paired to
+  the first receiver were never read. Receivers are now grouped by product id *and*
+  device instance, which the HID path carries; two receivers of the same kind say which
+  one they are in the diagnostics, and their devices get keys of their own. A single
+  receiver keeps the plain keys, so existing icons do not move.
 - Logitech: "slow charging" (status 4) now shows as charging.
 - Logitech: an error reply is accepted only when it answers our own request. Before,
   an error reply to G HUB's request could make a mouse show as "off".
