@@ -7,6 +7,13 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [1.11.0] - 2026-09-27
 
 ### Added
+- SteelSeries Arctis Nova Pro Wireless (base stations `1038:12E0` and `1038:12E5`),
+  ported from HeadsetControl: the same `b0` exchange as the other Nova headsets, but
+  asked for with report id `06` and read on interface 4. The level is a nine-step code
+  in byte 6 and the headset state in byte 15 (`01` off / out of range, `02` cable
+  charging, `08` on battery), so the tray says "about NN%" rather than pretending to a
+  percentage, and a reply with any other state byte or a level code above 8 is refused
+  rather than shown. **Unverified** - no base station was on hand (#41).
 - **Update check**: once a day the app asks GitHub for the latest release. When a newer
   one is out, a notification says so once, and the tray menu gets a "Download vX.Y.Z…"
   item that opens the release page. Nothing is downloaded or installed automatically,
