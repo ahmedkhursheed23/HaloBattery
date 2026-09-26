@@ -4,7 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.10.1.1] - 2026-09-26
+
+Build of 1.10.1 from the fork ahmedkhursheed23/HaloBattery with Logitech and
+SteelSeries support (HeyOkay/HaloBattery#12, merged for 1.11.0) and its follow-up
+(HeyOkay/HaloBattery#18). Use the official releases from 1.11.0 on.
 
 ### Added
 - Logitech support over HID++ 2.0, without G HUB (and alongside it). Every device
