@@ -30,11 +30,21 @@ Mouse battery (Rival 3 Wireless and family), from yurtemre7/steel-mouse:
     shown, and the raw reply is logged, so a probe settles the layout
   * SteelSeries GG reads the same collection, so both can run side by side
 
+Nova Pro Wireless (base station 0x12E0, X base station 0x12E5), from the same
+HeadsetControl source:
+  * the same b0 exchange, but asked for with report id 06 (06 b0) instead of 00, and
+    HeadsetControl reads it on interface 4 rather than 3
+  * reply: level code in byte 6 on a 0..8 scale (0, 12, 25, 37, 50, 62, 75, 87, 100),
+    state in byte 15: 01 = headset off / out of range, 02 = cable charging, 08 = on
+    battery. Any other state byte, a level code above 8 or a reply shorter than 16
+    bytes is refused rather than shown
+  * nine steps are not a percentage, so the tray shows "about NN%" for these
+
 Older Arctis headsets (Arctis 1, 7, 9, Pro Wireless) use other requests on other
 interfaces: see CLASSIC_MODELS further down.
 
-New models go into MODELS (headsets on the b0 exchange), MOUSE_MODELS (mice) or
-CLASSIC_MODELS (older headsets): product id -> (name, parser ...).
+New models go into MODELS (headsets on the b0 exchange), NOVA_PRO_MODELS,
+MOUSE_MODELS (mice) or CLASSIC_MODELS (older headsets): product id -> (name, parser ...).
 """
 from __future__ import annotations
 
@@ -88,6 +98,32 @@ def parse_gamebuds(r) -> Reading:
     if not levels:                        # both buds are in the case (or off)
         return None, False, False
     return min(min(levels), 100), False, True
+
+
+def parse_nova_pro(r) -> Reading:
+    """Nova Pro Wireless base station: level code 0..8 in byte 6, state in byte 15.
+
+    The state byte is the gate - a reply carrying anything else is not the battery
+    answer - and 0x01 is the headset reporting itself off, which is no reading at all
+    rather than 0%.
+    """
+    if len(r) < 16 or r[15] not in (0x01, 0x02, 0x08):
+        return None, False, False
+    if r[15] == 0x01 or not 0 <= r[6] <= 8:
+        return None, False, False
+    return r[6] * 100 // 8, r[15] == 0x02, True
+
+
+# Nova Pro Wireless base stations. Different report id, and HeadsetControl asks on
+# interface 4 for these two while the Nova 7 / Nova 5 dongles answer on interface 3.
+NOVA_PRO_REQUEST = [0x06, 0xB0]
+NOVA_PRO_INTERFACES = (3, 4)
+NOVA_PRO_MODELS = {
+    0x12E0: ("Arctis Nova Pro Wireless", parse_nova_pro),
+    0x12E5: ("Arctis Nova Pro Wireless X", parse_nova_pro),
+}
+# the level is a nine-step scale, so the tray says "about NN%" instead of "NN%"
+COARSE_PIDS = set(NOVA_PRO_MODELS)
 
 
 # tested on hardware: 22A1. The others follow HeadsetControl's device list.
@@ -241,7 +277,7 @@ class SteelSeriesProvider(Provider):
         self._diag: List[str] = []
         self._classic_path: Dict[int, bytes] = {}   # pid -> the collection that answered
 
-    def _read(self, path: bytes) -> Optional[List[int]]:
+    def _read(self, path: bytes, request: Optional[List[int]] = None) -> Optional[List[int]]:
         dev = hid.device()
         try:
             dev.open_path(path)
@@ -249,7 +285,7 @@ class SteelSeriesProvider(Provider):
             self._diag.append(f"  open: {e}")
             return None
         try:
-            dev.write(REQUEST)
+            dev.write(request or REQUEST)
             first = None
             end = time.time() + TIMEOUT
             while time.time() < end:
@@ -324,7 +360,21 @@ class SteelSeriesProvider(Provider):
         seen = set()
         for d in infos:
             pid = d["product_id"]
-            if pid in seen or d.get("interface_number") != INTERFACE:
+            iface = d.get("interface_number")
+            nova_pro = pid in NOVA_PRO_MODELS
+            if pid in seen or iface not in (NOVA_PRO_INTERFACES if nova_pro else (INTERFACE,)):
+                continue
+            if nova_pro:
+                seen.add(pid)
+                name, parse = NOVA_PRO_MODELS[pid]
+                self._diag.append(f"[SteelSeries] pid={pid:04x} '{name}'")
+                reply = self._read(d["path"], NOVA_PRO_REQUEST) or []
+                level, chg, online = parse(reply)
+                if not online and reply:
+                    self._diag.append("  the base station says the headset is off or out of range")
+                if online and level is not None:
+                    out.append(DeviceStatus(f"steelseries:{pid:04x}", name, level, chg, True,
+                                            "steelseries", f"about {level}%", kind="headset"))
                 continue
             if pid in MOUSE_MODELS:
                 seen.add(pid)

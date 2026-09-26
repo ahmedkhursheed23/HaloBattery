@@ -14,6 +14,7 @@ Tested on real hardware:
 
 | Device | Connection | How the battery is read |
 |---|---|---|
+| SteelSeries Arctis Nova Pro Wireless (`1038:12E0`, `1038:12E5` X) | Wireless base station, interface 3 or 4 | The same `b0` exchange as the other Nova headsets, with report id `06` instead of `00`: the level is a nine-step code in byte 6 and the headset state in byte 15 (`01` off / out of range, `02` cable charging, `08` on battery), as HeadsetControl documents for these base stations. Nine steps are shown as "about NN%" rather than as a percentage. Unverified on hardware here |
 | Razer BlackShark V2 Pro (2023) | 2.4 GHz receiver (1532:0555) | The headset's own "PA" protocol: output reports 0x02 on the vendor interface 0xFF00, remote mode 0xE1, commands 0x21 (battery) and 0x2A (charging) |
 | WLmouse Beast X Max | 8K receiver (36A7:A880) and USB cable | Feature request `02 02 00 83`; if there is no reply, the mouse heartbeat is used. Receiver and cable share one icon |
 | Razer Basilisk V3 Pro, Razer Basilisk Ultimate (tested by users) | 2.4 GHz receiver | The standard Razer 90-byte feature report, as used by Synapse and OpenRazer: power class 0x07, commands 0x80 (battery) and 0x84 (charging) |
