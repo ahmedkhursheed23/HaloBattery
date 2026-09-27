@@ -50,6 +50,7 @@ from this build helps. Use the official releases once they include these changes
     does not answer the request is never read as a level. Only vendor collections get
     a request. The Arctis Pro GameDAC is left out, because it is a wired headset.
 - SteelSeries Aerox 3 Wireless (`1038:1838`) over HID: battery and charging on the receiver's vendor protocol, next to the existing Nova headsets and alongside SteelSeries GG. **Unverified on hardware** - the interface, the `0xD2` query and the level scale come from three sources that agree on this product id (alloyctl's reverse engineering of `1038:1838`, yurtemre7/steel-mouse, and the capture notes at gort818/aerox3-wireless), but no Aerox 3 Wireless was available here. A level byte of 0 is read as off or asleep rather than empty, and a reply without the `d2` echo is refused rather than shown as a level. The CS2 Dragon Lore edition (`1038:1878`) is included untested
+- SteelSeries Aerox 9 Wireless (`1038:1858`, WOW Edition `1874`, #79) and Aerox 5 Wireless (`1038:1852`, `185C`, `1860`) in 2.4 GHz mode, on the same `00 d2` exchange as the Aerox 3 Wireless: rivalcfg builds the wireless profiles of all three mice the same way. **Unverified** - no Aerox 5 or 9 was on hand. `tests/test_steelseries_aerox.py` uses the interfaces from the #79 report.
 
 - SteelSeries Arctis Nova Pro Wireless (base stations `1038:12E0` and `1038:12E5`),
   ported from HeadsetControl: the same `b0` exchange as the other Nova headsets, but
