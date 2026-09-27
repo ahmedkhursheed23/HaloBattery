@@ -4,6 +4,15 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0.3] - 2026-09-27
+
+Test build from the fork ahmedkhursheed23/HaloBattery: 1.11.0.2 plus HeyOkay/HaloBattery#80
+(Aerox 5 / Aerox 9 Wireless). Use the official releases once they include these changes.
+
+### Added
+- SteelSeries Aerox 9 Wireless (#79) and Aerox 5 Wireless in 2.4 GHz mode, on the Aerox 3
+  Wireless exchange (`00 d2`). Not tested on these mice.
+
 ## [1.11.0.2] - 2026-09-27
 
 Test build from the fork ahmedkhursheed23/HaloBattery: 1.11.0.1 plus the changes proposed
