@@ -10,3 +10,4 @@ from .steelseries import SteelSeriesProvider  # noqa: F401
 from .hyperx import HyperXProvider  # noqa: F401
 from .playstation import PlayStationProvider  # noqa: F401
 from .nintendo import NintendoProvider  # noqa: F401
+from .asus import AsusProvider  # noqa: F401
