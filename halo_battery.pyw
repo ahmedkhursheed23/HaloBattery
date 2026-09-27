@@ -28,7 +28,7 @@ from typing import Dict, List, Optional, Set
 
 APP_NAME = "HaloBattery"
 APP_TITLE = "Halo Battery"
-VERSION = "1.11.0.3"
+VERSION = "1.11.0.4"
 LEGACY_NAME = "BatteryTray"      # the app's previous name (settings and autostart are migrated)
 
 if getattr(sys, "frozen", False):
@@ -62,9 +62,9 @@ import updates  # noqa: E402
 import winevents  # noqa: E402
 from providers import hidlist  # noqa: E402
 from providers import (AsusProvider, AudezeProvider, BluetoothProvider, DeviceStatus,  # noqa: E402
-                       HyperXProvider, LogitechProvider, MchoseProvider, NintendoProvider,
-                       PlayStationProvider, RazerProvider, SteelSeriesProvider, WLmouseProvider,
-                       XInputProvider)
+                       GWolvesProvider, HyperXProvider, LogitechProvider, MchoseProvider,
+                       NintendoProvider, PlayStationProvider, RazerProvider, SteelSeriesProvider,
+                       WLmouseProvider, XInputProvider)
 from providers.bluetooth import BluetoothWatcher  # noqa: E402
 
 HEADSET_WORDS = ("blackshark", "kraken", "barracuda", "nari", "thresher", "headset",
@@ -430,7 +430,8 @@ class App:
         self.light_taskbar = self.compute_light()
         self.providers = [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
                           HyperXProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
-                          PlayStationProvider(), NintendoProvider(), AsusProvider()]
+                          PlayStationProvider(), NintendoProvider(), AsusProvider(),
+                          GWolvesProvider()]
         self.bt = BluetoothProvider()
         self.icons: Dict[str, DeviceIcon] = {}
         self.placeholder: Optional[pystray.Icon] = None
@@ -1108,7 +1109,8 @@ def probe():
     app.cfg = load_config()
     app.providers = [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
                      HyperXProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
-                     PlayStationProvider(), NintendoProvider(), AsusProvider()]
+                     PlayStationProvider(), NintendoProvider(), AsusProvider(),
+                     GWolvesProvider()]
     app.bt = BluetoothProvider()
     res = []
     for p in app.providers + [app.bt]:

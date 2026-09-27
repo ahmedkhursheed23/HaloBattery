@@ -4,6 +4,18 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0.4] - 2026-09-27
+
+Test build from the fork ahmedkhursheed23/HaloBattery: 1.11.0.3 plus HeyOkay/HaloBattery#83
+(ASUS ROG / TUF mice) and #84 (G-Wolves mice). Use the official releases once they include
+these changes.
+
+### Added
+- ASUS ROG / TUF wireless mice (#81: ROG Gladius III Wireless AimPoint), with the battery
+  command G-Helper uses. Not tested on these mice.
+- G-Wolves mice on the 8K receiver (#82: G-Wolves WARG 8K), with the exchange G-Wolves' web
+  driver uses. Not tested on these mice.
+
 ## [1.11.0.3] - 2026-09-27
 
 Test build from the fork ahmedkhursheed23/HaloBattery: 1.11.0.2 plus HeyOkay/HaloBattery#80
