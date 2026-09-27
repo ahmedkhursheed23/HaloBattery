@@ -4,6 +4,13 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0.5] - 2026-09-27
+
+Test build from the fork ahmedkhursheed23/HaloBattery: `main` of HeyOkay/HaloBattery (684c39c,
+with everything merged for 1.12.0) plus the open PRs #59 (Logitech headsets and fixes), #80
+(Aerox 5 / Aerox 9 Wireless, with #50) and #89 (Lofree Hyzen). Use the official releases once
+they include these changes.
+
 ## [Unreleased]
 
 ### Added
@@ -14,6 +21,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
   its percentage is an estimate from the voltage and can differ from G HUB's.
 - Logitech receivers are also recognised by their product id (Solaar's list), not
   only by "receiver" in the product name.
+- Lofree Hyzen keyboards on their 2.4 GHz dongle (`388D:0025`, #82), with the battery query of Lofree's
+  own web driver (command `1A` in its report 0x04 transaction). **Unverified** - no Lofree keyboard was on
+  hand. `tests/test_lofree.py` uses the collections from the #82 report.
 - SteelSeries: older and other Arctis headsets. Not tested on these headsets; the raw
   replies go to the diagnostics.
   - On the `b0` exchange (interface 3): Arctis Nova 7P, Nova 3P / 3X Wireless,
