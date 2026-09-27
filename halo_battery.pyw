@@ -28,7 +28,7 @@ from typing import Dict, List, Optional, Set
 
 APP_NAME = "HaloBattery"
 APP_TITLE = "Halo Battery"
-VERSION = "1.11.0.1"
+VERSION = "1.11.0.2"
 LEGACY_NAME = "BatteryTray"      # the app's previous name (settings and autostart are migrated)
 
 if getattr(sys, "frozen", False):
@@ -62,8 +62,8 @@ import updates  # noqa: E402
 import winevents  # noqa: E402
 from providers import hidlist  # noqa: E402
 from providers import (AudezeProvider, BluetoothProvider, DeviceStatus, HyperXProvider,  # noqa: E402
-                       LogitechProvider, MchoseProvider, PlayStationProvider, RazerProvider,
-                       SteelSeriesProvider, WLmouseProvider, XInputProvider)
+                       LogitechProvider, MchoseProvider, NintendoProvider, PlayStationProvider,
+                       RazerProvider, SteelSeriesProvider, WLmouseProvider, XInputProvider)
 from providers.bluetooth import BluetoothWatcher  # noqa: E402
 
 HEADSET_WORDS = ("blackshark", "kraken", "barracuda", "nari", "thresher", "headset",
@@ -429,7 +429,7 @@ class App:
         self.light_taskbar = self.compute_light()
         self.providers = [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
                           HyperXProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
-                          PlayStationProvider()]
+                          PlayStationProvider(), NintendoProvider()]
         self.bt = BluetoothProvider()
         self.icons: Dict[str, DeviceIcon] = {}
         self.placeholder: Optional[pystray.Icon] = None
@@ -1107,7 +1107,7 @@ def probe():
     app.cfg = load_config()
     app.providers = [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
                      HyperXProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
-                     PlayStationProvider()]
+                     PlayStationProvider(), NintendoProvider()]
     app.bt = BluetoothProvider()
     res = []
     for p in app.providers + [app.bt]:

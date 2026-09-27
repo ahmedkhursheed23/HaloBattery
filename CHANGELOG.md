@@ -4,6 +4,24 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0.2] - 2026-09-27
+
+Test build from the fork ahmedkhursheed23/HaloBattery: 1.11.0.1 plus the changes proposed
+upstream in HeyOkay/HaloBattery#77 (Razer table from OpenRazer) and #78 (Nintendo Switch
+controllers). Use the official releases once they include these changes.
+
+### Added
+- Razer: every wireless mouse whose battery OpenRazer reads, with OpenRazer's transaction
+  id, for example the Pro Click V2 Vertical Edition (#58), Pro Click V2, Naga V2 Pro,
+  Viper V3 HyperSpeed and DeathAdder V3 HyperSpeed. Not tested on these mice.
+- Nintendo Switch Pro Controller and Joy-Con over Bluetooth (#63): five levels (full,
+  medium, low, critical, empty) and charging, read from the controller's own report. The
+  controller mode is never changed. Not tested on a Switch controller.
+
+### Fixed
+- Razer: 008F / 0090 are the Naga Pro, not the Naga V2 Pro; the Basilisk X HyperSpeed
+  is asked with transaction id 0xFF; the wired Viper (0078) no longer gets battery requests.
+
 ## [1.11.0.1] - 2026-09-27
 
 Test build of 1.11.0 from the fork ahmedkhursheed23/HaloBattery. It has the changes
