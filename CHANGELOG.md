@@ -4,6 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.11.0.6] - 2026-09-28
+
+Test build from the fork ahmedkhursheed23/HaloBattery: `main` of HeyOkay/HaloBattery at 18b7893,
+unchanged (everything merged for 1.12.0). Use the official releases once 1.12.0 is out.
+
 ## [Unreleased]
 
 ### Added
