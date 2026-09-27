@@ -33,6 +33,20 @@ Mouse battery (Rival 3 Wireless and family), from yurtemre7/steel-mouse:
 Older Arctis headsets (Arctis 1, 7, 9, Pro Wireless) use other requests on other
 interfaces: see CLASSIC_MODELS further down.
 
+Aerox 3 Wireless (and the CS2 Dragon Lore edition, which shares the protocol) from
+alloyctl's reverse engineering of 1038:1838 on real hardware, cross-checked against
+steel-mouse and the capture notes at gort818/aerox3-wireless:
+  * same interface 3 and the same ffc0 collection, 64-byte reports
+  * the receiver flags its configuration opcodes with 0x40 over the wired values, and the
+    battery query is no exception: the wired 0x92 is silent on the receiver while 0xD2 is
+    acknowledged, so 00 d2 ... is the request and a report echoing d2 comes back
+  * the level byte holds the charging flag in bit 7 and a step value below it: 1..21 on the
+    21-step scale these mice use, or a direct percentage above 21, as steel-mouse decodes it
+  * a level byte of 0 means the mouse is off or asleep, not empty, so it yields no reading
+  * the 2.4 GHz link sleeps when the mouse is idle, and the acknowledgement only arrives
+    while it is awake - the mouse wakes on the next movement, so a poll that lands on a
+    sleeping mouse simply produces no reading
+
 New models go into MODELS (headsets on the b0 exchange), MOUSE_MODELS (mice) or
 CLASSIC_MODELS (older headsets): product id -> (name, parser ...).
 """
@@ -127,6 +141,13 @@ MOUSE_READ_ATTEMPTS = 6
 MOUSE_READ_TIMEOUT_MS = 100
 
 
+# Aerox 3 Wireless: the receiver's flagged form of the wired battery query 0x92.
+AEROX_REQUEST = [0x00, 0xD2]
+AEROX_ECHO = 0xD2
+AEROX_STEPS = 21          # 1..21, step 21 = full; above that the byte is a percentage
+AEROX_CHARGING = 0x80     # bit in the level byte
+
+
 def parse_rival3(r) -> Reading:
     """Rival 3 Wireless: either aa <level> <?> <charging> ... or <level> <?> <charging>.
 
@@ -164,12 +185,60 @@ def parse_rival3(r) -> Reading:
     return None, False, False
 
 
+def parse_aerox3(r) -> Reading:
+    """Aerox 3 Wireless: d2 <level> ..., the Windows report id optionally in front.
+
+    The reply echoes the query (alloyctl verified 0xD2 is acknowledged on 1038:1838 while
+    the wired 0x92 stays silent), so a report without the echo yields no reading - the
+    interface also carries the link's other traffic. The level byte is bit 7 charging flag
+    plus a 1..21 step value, or a direct percentage above 21 (steel-mouse). A level byte of
+    0 means the mouse is off or asleep, so it is not read as an empty battery.
+    """
+    if not r:
+        return None, False, False
+    m = 1 if r[0] == 0x00 and len(r) > 1 else 0
+    if len(r) < m + 2 or r[m] != AEROX_ECHO:
+        return None, False, False
+    b = r[m + 1]
+    v = b & ~AEROX_CHARGING
+    if v == 0:
+        return None, False, False
+    level = min(v, 100) if v > AEROX_STEPS else (v - 1) * 5
+    return level, bool(b & AEROX_CHARGING), True
+
+
 # Rival 3 Wireless / Rival 650 exchange, as listed by steel-mouse. None of these has
 # been on hardware here; the reply layout is the open question in issue #5.
 MOUSE_MODELS = {
     0x1830: ("SteelSeries Rival 3 Wireless", parse_rival3),
     0x1872: ("SteelSeries Rival 3 Wireless Gen 2", parse_rival3),
+    0x1838: ("SteelSeries Aerox 3 Wireless", parse_aerox3),
+    0x1878: ("SteelSeries Aerox 3 Wireless CS2 Dragon Lore", parse_aerox3),
+    # Aerox 5 Wireless and Aerox 9 Wireless (2.4 GHz mode): rivalcfg builds their wireless
+    # profiles exactly like the Aerox 3 Wireless one - the wired battery command 0x92 with
+    # the wireless flag 0x40 (so 0xD2), a 64-byte readback, charging in bit 7 and the level
+    # as (value - 1) * 5 (rivalcfg devices/aerox{3,5,9}_wireless_wired.py and
+    # aerox{3,5,9}_wireless_wireless.py). Level confirmed on an Aerox 9 Wireless in #79.
+    0x1852: ("SteelSeries Aerox 5 Wireless", parse_aerox3),
+    0x185C: ("SteelSeries Aerox 5 Wireless Destiny 2 Edition", parse_aerox3),
+    0x1860: ("SteelSeries Aerox 5 Wireless Diablo IV Edition", parse_aerox3),
+    0x1858: ("SteelSeries Aerox 9 Wireless", parse_aerox3),
+    0x1874: ("SteelSeries Aerox 9 Wireless WOW Edition", parse_aerox3),
 }
+
+# Which exchange a mouse answers: the Rival 3 family takes 00 aa 01, the Aerox 3 family the
+# receiver's 00 d2 battery query (Aerox 3 / 5 / 9 Wireless). Everything else keeps the Rival 3
+# exchange.
+MOUSE_EXCHANGE = {
+    0x1838: (AEROX_REQUEST, AEROX_ECHO),
+    0x1878: (AEROX_REQUEST, AEROX_ECHO),
+    0x1852: (AEROX_REQUEST, AEROX_ECHO),
+    0x185C: (AEROX_REQUEST, AEROX_ECHO),
+    0x1860: (AEROX_REQUEST, AEROX_ECHO),
+    0x1858: (AEROX_REQUEST, AEROX_ECHO),
+    0x1874: (AEROX_REQUEST, AEROX_ECHO),
+}
+
 
 
 # ---------------------------------------------------------------- older Arctis headsets
@@ -318,14 +387,18 @@ class SteelSeriesProvider(Provider):
             except Exception:
                 pass
 
-    def _read_mouse(self, path: bytes, parse=None) -> Optional[List[int]]:
-        """00 aa 01 out, then the first report the model's parser accepts.
+    def _read_mouse(self, path: bytes, parse=None, exchange=None) -> Optional[List[int]]:
+        """The family's request out, then the first report the model's parser accepts.
 
-        A report carrying the aa echo is taken straight away. Otherwise the parser judges
+        Rival 3 family: 00 aa 01. Aerox 3 family: the receiver's 00 d2 battery query
+        (MOUSE_EXCHANGE says which).
+
+        A report carrying the family's echo byte is taken straight away. Otherwise the parser judges
         it, so a layout that does not echo the command still works - which is what
         flozz/rivalcfg describes for the Rival 3 - while the interface's other traffic is
         refused. Up to three rounds are tried, as steel-mouse does.
         """
+        request, echo = exchange or (MOUSE_REQUEST, MOUSE_ECHO)
         dev = hid.device()
         try:
             dev.open_path(path)
@@ -335,7 +408,7 @@ class SteelSeriesProvider(Provider):
         try:
             for _ in range(MOUSE_WRITE_ATTEMPTS):
                 try:
-                    dev.write(MOUSE_REQUEST + [0x00] * 61)   # 64 bytes, as steel-mouse sends
+                    dev.write(request + [0x00] * (64 - len(request)))   # 64 bytes
                 except (OSError, IOError, ValueError) as e:
                     self._diag.append(f"  write: {e}")
                     continue
@@ -343,16 +416,16 @@ class SteelSeriesProvider(Provider):
                     r = list(dev.read(64, MOUSE_READ_TIMEOUT_MS) or [])
                     if not r:
                         continue
-                    if r[0] == MOUSE_ECHO or (r[0] == 0x00 and len(r) > 1 and r[1] == MOUSE_ECHO):
-                        self._diag.append(f"  reply (aa echo): {hexdump(r, 8)}")
+                    if r[0] == echo or (r[0] == 0x00 and len(r) > 1 and r[1] == echo):
+                        self._diag.append(f"  reply ({echo:02x} echo): {hexdump(r, 8)}")
                         return r
                     if parse is not None and parse(r)[2]:
-                        self._diag.append(f"  reply (no aa echo, read the way rivalcfg "
+                        self._diag.append(f"  reply (no {echo:02x} echo, read the way rivalcfg "
                                           f"does): {hexdump(r, 8)}")
                         return r
-                    self._diag.append(f"  reply (no aa echo): {hexdump(r, 8)}")
+                    self._diag.append(f"  reply (no {echo:02x} echo): {hexdump(r, 8)}")
                     break
-            self._diag.append("  no reply with the aa echo")
+            self._diag.append(f"  no reply with the {echo:02x} echo")
             return None
         except (OSError, IOError, ValueError) as e:
             self._diag.append(f"  error: {e}")
@@ -380,8 +453,11 @@ class SteelSeriesProvider(Provider):
                 continue
             if pid in MOUSE_MODELS:
                 name, parse = MOUSE_MODELS[pid]
-                self._diag.append(f"[SteelSeries] pid={pid:04x} '{name}' (mouse)")
-                level, chg, online = parse(self._read_mouse(d["path"], parse) or [])
+                request, echo = MOUSE_EXCHANGE.get(pid, (MOUSE_REQUEST, MOUSE_ECHO))
+                self._diag.append(f"[SteelSeries] pid={pid:04x} '{name}' (mouse, "
+                                  f"{echo:02x} exchange)")
+                level, chg, online = parse(self._read_mouse(d["path"], parse,
+                                                            (request, echo)) or [])
                 if online and level is not None:
                     out.append(DeviceStatus(f"steelseries:{pid:04x}", name, level, chg, True,
                                             "steelseries", kind="mouse"))

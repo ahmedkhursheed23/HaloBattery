@@ -201,6 +201,8 @@ and the project follows [Semantic Versioning](https://semver.org/).
   WLmouse feature report exchange that G-Wolves' own web driver (mouse.xyz) uses for these
   mice. The request goes only to the collection with a 64-byte feature report. **Unverified** -
   no G-Wolves mouse was on hand. `tests/test_gwolves.py` uses the collections from the #82 report.
+- SteelSeries Aerox 3 Wireless (`1038:1838`) over HID: battery and charging on the receiver's vendor protocol, next to the existing Nova headsets and alongside SteelSeries GG. **Unverified on hardware** - the interface, the `0xD2` query and the level scale come from three sources that agree on this product id (alloyctl's reverse engineering of `1038:1838`, yurtemre7/steel-mouse, and the capture notes at gort818/aerox3-wireless), but no Aerox 3 Wireless was available here. A level byte of 0 is read as off or asleep rather than empty, and a reply without the `d2` echo is refused rather than shown as a level. The CS2 Dragon Lore edition (`1038:1878`) is included untested
+- SteelSeries Aerox 9 Wireless (`1038:1858`, WOW Edition `1874`, #79) and Aerox 5 Wireless (`1038:1852`, `185C`, `1860`) in 2.4 GHz mode, on the same `00 d2` exchange as the Aerox 3 Wireless: rivalcfg builds the wireless profiles of all three mice the same way. The level is confirmed on an Aerox 9 Wireless by @AJD00m (#79): the reply `d2 04 ...` gives 15 %, the same as SteelSeries GG. Not tested yet: the charging bit, and the Aerox 5. `tests/test_steelseries_aerox.py` uses the interfaces and the reply from the #79 reports.
 
 ## [1.11.0] - 2026-09-27
 
