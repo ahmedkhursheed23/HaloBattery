@@ -152,13 +152,28 @@ MOUSE_MODELS = {
     0x1872: ("SteelSeries Rival 3 Wireless Gen 2", parse_rival3),
     0x1838: ("SteelSeries Aerox 3 Wireless", parse_aerox3),
     0x1878: ("SteelSeries Aerox 3 Wireless CS2 Dragon Lore", parse_aerox3),
+    # Aerox 5 Wireless and Aerox 9 Wireless (2.4 GHz mode): rivalcfg builds their wireless
+    # profiles exactly like the Aerox 3 Wireless one - the wired battery command 0x92 with
+    # the wireless flag 0x40 (so 0xD2), a 64-byte readback, charging in bit 7 and the level
+    # as (value - 1) * 5 (rivalcfg devices/aerox{3,5,9}_wireless_wired.py / _wireless.py).
+    0x1852: ("SteelSeries Aerox 5 Wireless", parse_aerox3),
+    0x185C: ("SteelSeries Aerox 5 Wireless Destiny 2 Edition", parse_aerox3),
+    0x1860: ("SteelSeries Aerox 5 Wireless Diablo IV Edition", parse_aerox3),
+    0x1858: ("SteelSeries Aerox 9 Wireless", parse_aerox3),
+    0x1874: ("SteelSeries Aerox 9 Wireless WOW Edition", parse_aerox3),
 }
 
 # Which exchange a mouse answers: the Rival 3 family takes 00 aa 01, the Aerox 3 family the
-# receiver's 00 d2 battery query. Everything else keeps the Rival 3 exchange.
+# receiver's 00 d2 battery query (Aerox 3 / 5 / 9 Wireless). Everything else keeps the Rival 3
+# exchange.
 MOUSE_EXCHANGE = {
     0x1838: (AEROX_REQUEST, AEROX_ECHO),
     0x1878: (AEROX_REQUEST, AEROX_ECHO),
+    0x1852: (AEROX_REQUEST, AEROX_ECHO),
+    0x185C: (AEROX_REQUEST, AEROX_ECHO),
+    0x1860: (AEROX_REQUEST, AEROX_ECHO),
+    0x1858: (AEROX_REQUEST, AEROX_ECHO),
+    0x1874: (AEROX_REQUEST, AEROX_ECHO),
 }
 
 
