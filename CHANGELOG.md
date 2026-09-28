@@ -4,6 +4,10 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.5] - 2026-09-29
+
+Test build: 1.12.0.4 plus #139 (the menu shows the hover highlight again).
+
 ## [1.12.0.4] - 2026-09-28
 
 Test build: 1.12.0.3 plus #129 (Bluetooth updates keep the poll interval), #130 (a receiver
