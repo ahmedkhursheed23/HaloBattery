@@ -4,6 +4,15 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.4] - 2026-09-28
+
+Test build: 1.12.0.3 plus #129 (Bluetooth updates keep the poll interval), #130 (a receiver
+without a reading no longer hides the Bluetooth level), #131 (Cloud III feature-report
+fallback), #132 (one icon per USB PlayStation controller; one icon for a Razer mouse on its
+cable), #133 (Barracuda: shorter polls with the headset off), #134 (JBL: background reader),
+#135 (icons drawn in one colour), #136 (hide during a poll) and #137 (optional low battery
+sound, Preferences).
+
 ## [1.12.0.3] - 2026-09-28
 
 Test build: 1.12.0.2 plus the HyperX Cloud III S fix in #123 (output reports, and the answer
@@ -23,13 +32,12 @@ models). See [Unreleased] below.
   HyperSpeed and BlackWidow V4 Tenkeyless HyperSpeed keyboards, on the HyperSpeed receiver or
   the cable (#106). The transaction ids (0x9F wireless, 0x1F wired) and the USB interface that
   takes the commands (2 or 3) come from OpenRazer's keyboard driver. The icon shows the
-  keyboard pictogram. **Unverified** on hardware.
+  keyboard pictogram. **Verified on hardware** (DeathStalker V2 Pro TKL, #106).
 - HyperX Cloud III S Wireless on its dongle (03F0:02CC, #106), with the protocol of
-  HyperHeadset's `cloud_iii_s_wireless`, sent as output reports the way NGENUITY sends them: battery and charging, read-only requests. **Unverified** on
-  hardware.
+  HyperHeadset's `cloud_iii_s_wireless`, sent as output reports the way NGENUITY sends them: battery and charging, read-only requests. **Verified on hardware** (#106).
 - Logitech G PRO X 2 LIGHTSPEED headset on its receiver (046D:0AF7, #103), over Logitech's
   Centurion transport as Solaar and HeadsetControl read it: battery and charging, read-only
-  requests. **Unverified** on hardware.
+  requests. **Verified on hardware** (#103).
 - G-Wolves HSK Pro ACE on its receiver (33E4:5803, #105), and the other 21 G-Wolves models
   with a receiver of their own, from the model list of G-Wolves' web driver (mouse.xyz). The
   older models use the web driver's other battery request (getOldBattery). **Unverified** on
