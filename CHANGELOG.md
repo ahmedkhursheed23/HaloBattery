@@ -59,12 +59,13 @@ models). See [Unreleased] below.
   every 5 minutes while the device stays low, awake and off the charger.
 - SteelSeries Arctis Nova Elite (`1038:2244`, #138): battery level and charging of the
   headset through its base station, without SteelSeries GG. The app sends the read-only
-  status request `01 b0` to interface 3 and reads the `07 b7` frame (headset level,
-  charging) and the `07 b5` frame (headset off). A headset that is off shows no level;
-  the spare battery in the station is not shown. The exchange comes from
-  elegos/Linux-Arctis-Manager, made from a USB capture of SteelSeries GG on Windows.
-  **Unverified** on hardware: no Nova Elite was on hand, so a level above 100 is refused
-  rather than shown.
+  status request `01 b0` to interface 3 and reads the station's direct `01 b0` reply
+  (headset level in byte 6, power state in byte 14, charging in byte 15), or the
+  `07 b7` / `07 b5` frames. A headset that is off shows no level; the spare battery in
+  the station is not shown. The request comes from elegos/Linux-Arctis-Manager (a USB
+  capture of SteelSeries GG on Windows), the reply layout from loteran/Arctis-Sound-Manager
+  (SteelSeries GG's own description of the station). **Level verified on hardware** in
+  #138: 31 %, the same as SteelSeries GG. Charging and "off" are not tested yet.
 
 ### Changed
 - New tray menu in the Windows 11 style: Segoe UI Variable text, Fluent icons, an acrylic

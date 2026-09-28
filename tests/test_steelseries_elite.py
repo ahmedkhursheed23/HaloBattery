@@ -8,7 +8,9 @@ behaves the way elegos/Linux-Arctis-Manager and loteran/Arctis-Sound-Manager des
   * the answer is a set of 07 xx input reports, delivered to the collection that
     declares report id 7, which can be another one than the collection that took the
     request: 07 b7 carries the levels and the charging state, 07 b5 the power state;
-  * the station can also push a 07 b7 without being asked.
+  * the station can also push a 07 b7 without being asked;
+  * on the real station of #138 the answer was the direct reply 01 b0 instead:
+    `01 b0 00 00 01 00 1f 64 ...` with SteelSeries GG at 31 % (byte 6 = 0x1f).
 A fake clock replaces time.
 
 Run from the repository root:
@@ -52,6 +54,13 @@ def battery(level=87, spare=100, charging=0x08):
 
 def power(state=0x08):
     return [0x07, 0xB5, 0x00, 0x00, state] + [0] * 59
+
+
+def reply(level=0x1F, spare=0x64, radio=0x00, charging=0x00):
+    """The direct 01 b0 reply; the first 8 bytes are the ones #138 showed."""
+    r = [0x01, 0xB0, 0x00, 0x00, 0x01, 0x00, level, spare] + [0] * 56
+    r[14], r[15] = radio, charging
+    return r
 
 
 class Station:
@@ -186,7 +195,8 @@ class EliteTest(unittest.TestCase):
         self.assertEqual(self.levels(self.poll(station)), [(72, False)])
 
     def test_other_reports_are_ignored(self):
-        other = [[0x01, 0xB0, 0x01, 0x00, 0x04, 0x01, 0x50] + [0] * 57,   # direct reply
+        other = [[0x01, 0xB0, 0x01, 0x00, 0x04, 0x01, 0x50],             # reply, too short
+                 [0x01, 0xB1] + [0] * 62,                                  # not the b0 reply
                  [0x07, 0xB8, 0x03] + [0] * 61,                            # ANC level
                  [0x07, 0x45, 0x64, 0x64] + [0] * 60,                      # ChatMix
                  [0x06, 0xB7, 0x32, 0x00, 0x02] + [0] * 59,                # not report 07
@@ -199,7 +209,46 @@ class EliteTest(unittest.TestCase):
     def test_no_reply_gives_no_level(self):
         station = Station(frames=[])
         self.assertEqual(self.poll(station), [])
-        self.assertTrue(any("no battery frame" in line for line in self.provider.diagnostics()))
+        self.assertTrue(any("no battery level" in line for line in self.provider.diagnostics()))
+
+    # ---- the direct 01 b0 reply (what the #138 station sent) ---------------------
+    def test_issue_138_direct_reply(self):
+        station = Station(frames=[reply()])
+        res = self.poll(station)
+        self.assertEqual([(r.key, r.level, r.charging, r.online) for r in res],
+                         [("steelseries:2244", 31, False, True)])
+        self.assertTrue(any("01 b0 reply on ffc0:0001: 01 b0 00 00 01 00 1f 64" in line
+                            for line in self.provider.diagnostics()))
+
+    def test_direct_reply_charging(self):
+        station = Station(frames=[reply(level=55, charging=0x02)])
+        self.assertEqual(self.levels(self.poll(station)), [(55, True)])
+        station = Station(frames=[reply(level=55, charging=0x08)])
+        self.assertEqual(self.levels(self.poll(station)), [(55, False)])
+
+    def test_direct_reply_on_the_cable(self):
+        station = Station(frames=[reply(level=55, radio=0x02)])
+        self.assertEqual(self.levels(self.poll(station)), [(55, True)])
+
+    def test_direct_reply_headset_off(self):
+        station = Station(frames=[reply(level=0, radio=0x01)])
+        self.assertEqual(self.poll(station), [])
+        self.assertTrue(any("off or out of range" in line
+                            for line in self.provider.diagnostics()))
+
+    def test_direct_reply_level_above_100_is_refused(self):
+        station = Station(frames=[reply(level=0xFF, radio=0x08)])
+        self.assertEqual(self.poll(station), [])
+
+    def test_direct_reply_spare_battery_is_not_the_level(self):
+        station = Station(frames=[reply(level=12, spare=100, radio=0x08)])
+        self.assertEqual(self.levels(self.poll(station)), [(12, False)])
+
+    def test_direct_reply_logs_bytes_14_and_15(self):
+        station = Station(frames=[reply(radio=0x08, charging=0x08)])
+        self.poll(station)
+        self.assertTrue(any(line.endswith("00 00 00 00 00 00 08 08 00") for line in
+                            self.provider.diagnostics() if "01 b0 reply" in line))
 
     def test_frames_are_logged_in_hex(self):
         station = Station()
