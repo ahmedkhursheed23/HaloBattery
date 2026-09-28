@@ -95,6 +95,79 @@ class PlacementTests(unittest.TestCase):
         self.assertEqual(y, WORK[3] - 150)
 
 
+class TaskbarAreaTests(unittest.TestCase):
+    """The menu and its submenus stay off the taskbar even when the work area includes
+    it: an auto-hide taskbar, or the taskbar over a full screen game (reported with
+    Dota 2: the bottom rows of the menu were behind the taskbar)."""
+    SCREEN = (0, 0, 1920, 1080)
+
+    def test_bottom_taskbar_is_cut_off(self):
+        self.assertEqual(flyout.usable_area(self.SCREEN, (0, 1032, 1920, 1080)), (0, 0, 1920, 1032))
+
+    def test_top_left_and_right_taskbars(self):
+        self.assertEqual(flyout.usable_area(self.SCREEN, (0, 0, 1920, 48)), (0, 48, 1920, 1080))
+        self.assertEqual(flyout.usable_area(self.SCREEN, (0, 0, 48, 1080)), (48, 0, 1920, 1080))
+        self.assertEqual(flyout.usable_area(self.SCREEN, (1872, 0, 1920, 1080)), (0, 0, 1872, 1080))
+
+    def test_a_work_area_without_the_taskbar_is_unchanged(self):
+        # the usual case: Windows already left the taskbar out
+        self.assertEqual(flyout.usable_area(WORK, (0, 1032, 1920, 1080)), WORK)
+        self.assertEqual(flyout.usable_area(WORK, None), WORK)
+
+    def test_a_hidden_auto_hide_taskbar_leaves_its_visible_edge_out(self):
+        # hidden, it keeps a 2 px edge on the screen
+        self.assertEqual(flyout.usable_area(self.SCREEN, (0, 1078, 1920, 1126)), (0, 0, 1920, 1078))
+
+    def test_a_taskbar_on_another_monitor_is_ignored(self):
+        self.assertEqual(flyout.usable_area(self.SCREEN, (1920, 1032, 3840, 1080)), self.SCREEN)
+
+    def test_a_long_submenu_opens_above_the_taskbar(self):
+        # Preferences near the bottom of a full screen game: 500 px tall
+        area = flyout.usable_area(self.SCREEN, (0, 1032, 1920, 1080))
+        x, y = flyout.place_submenu(1000, 1250, 900, 250, 500, area)
+        self.assertLessEqual(y + 500, 1032)
+
+    def test_the_menu_passes_the_area_without_the_taskbar_to_its_submenus(self):
+        import types
+        seen = {}
+
+        class FakeWin32:
+            def monitor(self, x, y):
+                return (0, 0, 1920, 1080), 1.0          # the work area includes the taskbar
+
+            def taskbar(self, x, y):
+                return (0, 1032, 1920, 1080)
+
+            def buttons_down(self):
+                return False
+
+            def activate(self, hwnd):
+                pass
+
+        class FakePanel:
+            def __init__(self, host, menu, style, parent, row):
+                self.rows, self.w, self.h, self.hwnd = [1], 250, 300, 1
+                self.win = types.SimpleNamespace(focus_force=lambda: None)
+
+            def open(self, x, y):
+                seen["y"] = y
+
+            def destroy(self):
+                pass
+
+        host = flyout.FlyoutHost(FakeWin32())
+        host._root = types.SimpleNamespace(after=lambda *a: None, after_cancel=lambda *a: None)
+        host.style = lambda scale, light: types.SimpleNamespace(scale=scale)
+        saved = flyout._Panel
+        flyout._Panel = FakePanel
+        try:
+            host._show(None, None, (1500, 1050))
+        finally:
+            flyout._Panel = saved
+        self.assertEqual(host.panels[0].work, (0, 0, 1920, 1032))
+        self.assertLessEqual(seen["y"] + 300, 1032)
+
+
 class CounterTests(unittest.TestCase):
     def make(self, value=20):
         cfg = {"low": value}

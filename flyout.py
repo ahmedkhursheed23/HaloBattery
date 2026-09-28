@@ -138,6 +138,35 @@ def _clamp(v: int, lo: int, hi: int) -> int:
     return max(lo, min(v, hi)) if hi >= lo else lo
 
 
+def usable_area(work: Rect, taskbar: Optional[Rect]) -> Rect:
+    """The work area without the taskbar.
+
+    The monitor's work area leaves the taskbar out only while the taskbar reserves its
+    space. An auto-hide taskbar does not, and neither does the taskbar over a full
+    screen game after the Windows key brings it up: the work area is then the whole
+    screen, and a menu placed in it can open behind the taskbar. The taskbar's own
+    rectangle is cut off the side it sits on."""
+    left, top, right, bottom = work
+    if taskbar is None:
+        return work
+    tl, tt, tr, tb = taskbar
+    if tr <= left or tl >= right or tb <= top or tt >= bottom:
+        return work                                    # not on this area
+    if tr - tl > tb - tt:                              # horizontal taskbar
+        if tt > top:
+            bottom = min(bottom, tt)                   # at the bottom
+        else:
+            top = max(top, tb)                         # at the top
+    else:                                              # vertical taskbar
+        if tl > left:
+            right = min(right, tl)                     # on the right
+        else:
+            left = max(left, tr)                       # on the left
+    if right <= left or bottom <= top:
+        return work                                    # a taskbar that fills the area
+    return left, top, right, bottom
+
+
 def place_menu(cx: int, cy: int, w: int, h: int, work: Rect,
                taskbar: Optional[Rect] = None, scale: float = 1.0) -> Tuple[int, int]:
     """The menu's top-left corner for a click at (cx, cy), the way Windows 11 opens
@@ -617,6 +646,7 @@ class FlyoutHost:
         else:
             work = (0, 0, self._root.winfo_screenwidth(), self._root.winfo_screenheight())
             scale = 1.0
+        work = usable_area(work, taskbar)            # submenus use it too (panel.work)
         style = self.style(scale, apps_use_light_theme())
         panel = _Panel(self, menu, style, None, None)
         if not panel.rows:
