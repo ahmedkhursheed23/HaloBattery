@@ -95,6 +95,10 @@ models). See [Unreleased] below.
   the headset to speak and held back the icons of all other devices. The app now listens
   to the receiver all the time in the background, so polls do not wait, and a level the
   headset sends between polls is no longer missed.
+- Less CPU while a device charges: each new battery level drew the charging animation
+  twice, once for a light and once for a dark taskbar. Only the colour in use is drawn
+  now; the other one is drawn once, the first time the taskbar or the MyDockFinder bar
+  changes colour.
 
 ## [1.12.0] - 2026-09-28
 
