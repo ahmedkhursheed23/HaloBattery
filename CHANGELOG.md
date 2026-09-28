@@ -4,6 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.6] - 2026-09-29
+
+Test build: 1.12.0.5 plus #140 (an 8BitDo on its dock dongle is not shown as charging, #110)
+and #141 (SteelSeries Arctis Nova Elite, #138).
+
 ## [1.12.0.5] - 2026-09-29
 
 Test build: 1.12.0.4 plus #139 (the menu shows the hover highlight again).
