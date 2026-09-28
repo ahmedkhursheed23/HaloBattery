@@ -73,6 +73,9 @@ models). See [Unreleased] below.
 - The tray menu or one of its submenus could open behind the taskbar when the work area
   includes the taskbar: with an auto-hide taskbar, or over a full screen game after the
   Windows key brings the taskbar up. The menus now leave the taskbar's rectangle out.
+- Tray menu: the item under the mouse was not highlighted. Opening the menu brings it to
+  the front, and its acrylic background then hid the highlight window behind it. The
+  highlight is now put in front of the menu each time it is shown.
 - The menu text was small and blurry on displays scaled above 100 %: the app is now DPI
   aware, so the menu and the tray icons are drawn at the display's real resolution.
 - PS4 / PS5 controllers over Bluetooth stopped working in some games (DirectInput, for

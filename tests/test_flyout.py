@@ -7,6 +7,7 @@ Run from the repository root:
 """
 import os
 import sys
+import types
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -269,6 +270,85 @@ class LayoutTests(unittest.TestCase):
         rows = flyout.build_rows(Menu(Item("x" * 40, lambda: None)))
         w, _h = flyout.layout(rows, FakeStyle(), measure, lambda g: 10)
         self.assertEqual(w, 4 + 8 + 24 + 280 + 10 + 4)
+
+
+class FakeWindow:
+    """Records what the highlight code does to a tkinter window."""
+
+    def __init__(self):
+        self.calls = []
+
+    def attributes(self, name, value):
+        self.calls.append((name, value))
+
+    def geometry(self, geo):
+        self.calls.append(("geometry", geo))
+
+    def update_idletasks(self):
+        self.calls.append(("idle",))
+
+    def configure(self, **kw):
+        pass
+
+    def delete(self, *a):
+        pass
+
+    def create_rectangle(self, *a, **kw):
+        pass
+
+    def create_oval(self, *a, **kw):
+        pass
+
+
+class HighlightTests(unittest.TestCase):
+    """The highlight is a window of its own. Opening the menu brings the panel to the
+    front (it takes the focus), and the panel's acrylic then hides a highlight that is
+    behind it, so the highlight is raised each time it is shown."""
+
+    def panel(self, box):
+        p = object.__new__(flyout._Panel)
+        p.overlay, p.ocanvas = FakeWindow(), FakeWindow()
+        self.raised = []
+
+        def to_top(hwnd):
+            self.raised.append(hwnd)
+            p.overlay.calls.append(("raise", hwnd))
+        p.host = types.SimpleNamespace(_w=types.SimpleNamespace(to_top=to_top))
+        p._overlay_hwnd = 0x1234
+        p.style = FakeStyle()
+        p.style.colours = {"hover": "#ffffff", "hover_alpha": 0.1}
+        p.x, p.y, p._overlay_geo = 100, 200, None
+        p.highlight_box = lambda: box
+        p._fade_running = lambda: False
+        return p
+
+    def test_a_shown_highlight_is_raised_over_the_panel(self):
+        p = self.panel((4, 5, 200, 34))
+        p.update_highlight()
+        self.assertEqual(self.raised, [0x1234])
+        self.assertEqual(p.overlay.calls[-1], ("-alpha", 0.1))
+        # moved first, and the move applied before the raise: raising a window whose
+        # move Tk has not made yet keeps it in the panel's corner
+        self.assertEqual(p.overlay.calls, [("geometry", "196x29+104+205"), ("idle",),
+                                           ("raise", 0x1234), ("-alpha", 0.1)])
+
+    def test_the_same_box_again_is_raised_again(self):
+        p = self.panel((4, 5, 200, 34))
+        p.update_highlight()
+        p.update_highlight()                       # e.g. after a click brought the panel up
+        self.assertEqual(self.raised, [0x1234, 0x1234])
+
+    def test_a_hidden_highlight_is_not_raised(self):
+        p = self.panel(None)
+        p.update_highlight()
+        self.assertEqual(p.overlay.calls, [("-alpha", 0.0)])
+        self.assertEqual(self.raised, [])
+
+    def test_no_win32_helper_is_not_an_error(self):
+        p = self.panel((4, 5, 200, 34))
+        p.host = types.SimpleNamespace(_w=None)     # not Windows
+        p.update_highlight()
+        self.assertEqual(p.overlay.calls[-1], ("-alpha", 0.1))
 
 
 if __name__ == "__main__":
