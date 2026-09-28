@@ -4,6 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.7] - 2026-09-29
+
+Test build: 1.12.0.6 plus the Arctis Nova Elite fix in #141 (the level is read from the
+station's direct `01 b0` reply, which is what the #138 station sends).
+
 ## [1.12.0.6] - 2026-09-29
 
 Test build: 1.12.0.5 plus #140 (an 8BitDo on its dock dongle is not shown as charging, #110)
