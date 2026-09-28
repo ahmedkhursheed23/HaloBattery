@@ -34,6 +34,8 @@ models). See [Unreleased] below.
   with a receiver of their own, from the model list of G-Wolves' web driver (mouse.xyz). The
   older models use the web driver's other battery request (getOldBattery). **Unverified** on
   hardware.
+  HyperHeadset's `cloud_iii_s_wireless`, sent as output reports the way NGENUITY sends them: battery and charging, read-only requests. **Verified on hardware** in #106: 89 %, the same level as
+  NGENUITY.
 
 ### Changed
 - New tray menu in the Windows 11 style: Segoe UI Variable text, Fluent icons, an acrylic
