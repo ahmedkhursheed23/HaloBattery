@@ -4,6 +4,13 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.2] - 2026-09-28
+
+Test build from the fork ahmedkhursheed23/HaloBattery: `main` of HeyOkay/HaloBattery at e80dfd1 plus
+the open PRs #118 (Xbox over Bluetooth), #119 (Razer "no link"), #120 (menus off the taskbar),
+#122 (Razer keyboards), #123 (HyperX Cloud III S), #124 (Logitech PRO X 2) and #125 (G-Wolves
+models). See [Unreleased] below.
+
 ## [Unreleased]
 
 ### Added
