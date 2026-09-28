@@ -74,6 +74,11 @@ models). See [Unreleased] below.
   minute, and several times after a device connects) also polled every mouse, keyboard
   and headset, so a 5-minute interval became about one minute. A Bluetooth update now
   only refreshes the Bluetooth icons; the other devices are polled at the chosen interval.
+- A device used over Bluetooth lost its battery level when its USB receiver was also
+  plugged in (for example a Razer Barracuda Pro, or a mouse switched to its Bluetooth
+  channel): the Bluetooth reading was hidden as a duplicate and only the grey "no link"
+  icon of the receiver was left. The Bluetooth reading is now hidden only while the
+  receiver actually reads the device.
 
 ## [1.12.0] - 2026-09-28
 

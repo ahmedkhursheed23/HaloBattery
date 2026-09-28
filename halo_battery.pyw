@@ -510,9 +510,13 @@ def drop_bluetooth_duplicates(results: List[DeviceStatus],
     Bluetooth is covered at all: the vendor collection the provider needs does not
     exist over Bluetooth.
     """
-    # controllers are left to dedupe_controllers(): for them the Bluetooth value wins
+    # controllers are left to dedupe_controllers(): for them the Bluetooth value wins.
+    # Only a live HID reading counts: a receiver whose device is not linked (no level)
+    # or a greyed-out last value (not online) means the device is elsewhere, often on
+    # Bluetooth right now, and dropping that live copy left only the grey icon
     hid = [device_family(st.name) for st in results
-           if not st.key.startswith("bt:") and st.source not in ("bluetooth", "xinput")]
+           if not st.key.startswith("bt:") and st.source not in ("bluetooth", "xinput")
+           and st.online and st.level is not None]
     kept: List[DeviceStatus] = []
     for st in results:
         if st.key.startswith("bt:") or st.source == "bluetooth":
