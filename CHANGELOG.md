@@ -4,6 +4,11 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.12.0.3] - 2026-09-28
+
+Test build: 1.12.0.2 plus the HyperX Cloud III S fix in #123 (output reports, and the answer
+read on every collection of the dongle).
+
 ## [1.12.0.2] - 2026-09-28
 
 Test build from the fork ahmedkhursheed23/HaloBattery: `main` of HeyOkay/HaloBattery at e80dfd1 plus
