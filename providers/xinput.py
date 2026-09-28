@@ -273,7 +273,14 @@ class XInputProvider(Provider):
         # pad a DualSense's name and level. Only the vendors this provider reads are kept,
         # and the list is paired with the slots only when the two counts agree - a mismatch
         # means the pairing cannot be trusted and the coarse XInput level is used instead.
-        reports = [r for r in self._wgi(now, frozenset(s for s, _ in slots)) if r.vid in NAMED_VIDS]
+        all_reports = self._wgi(now, frozenset(s for s, _ in slots))
+        # XInput's "wired" type does not always mean a cable: the 2.4 GHz dongle of an
+        # 8BitDo Ultimate dock (2dc8:3106) says "wired" for a pad that is off the dock
+        # and off the cable, while Windows.Gaming.Input says Discharging for it (#110).
+        # Its report is not in the vendor list below, so only its status is kept here,
+        # paired by the same count rule; its level (a constant remain=full=1000) is not.
+        statuses = [r.status for r in all_reports] if len(all_reports) == len(slots) else []
+        reports = [r for r in all_reports if r.vid in NAMED_VIDS]
         if len(reports) != len(slots):
             if reports:
                 self._diag.append(f"[XInput] {len(reports)} Windows.Gaming.Input report(s) for "
@@ -343,6 +350,13 @@ class XInputProvider(Provider):
                 if slot in self._waiting:
                     log.info("[XInput] slot %d battery reported after %.0f s", slot, now - self._waiting.pop(slot))
                 level, charging, approx = res
+                if charging and n < len(statuses) and statuses[n] == "discharging":
+                    # "wired" from XInput, but Windows says the battery discharges: not
+                    # on a cable, and neither API has a real level for it
+                    self._diag.append(f"[XInput] slot {slot}: type wired, but Windows.Gaming.Input "
+                                      "says discharging: not shown as on cable")
+                    connected.append((slot, name, None, False, "connected, battery level not reported"))
+                    continue
                 if not charging:
                     self._last[slot] = level
                 connected.append((slot, name, level, charging, approx))

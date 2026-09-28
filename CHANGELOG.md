@@ -121,6 +121,11 @@ models). See [Unreleased] below.
 - **Hide this device** clicked while the app was reading the devices could bring the
   icon of the hidden device back, or stop that reading halfway so the "no devices" icon
   did not show. Hiding and the device update now wait for each other.
+- An 8BitDo Ultimate controller on its dock's 2.4 GHz dongle showed "on cable, charging"
+  while it was off the dock and off the cable (#110). The dongle tells XInput that the
+  controller is wired, but Windows.Gaming.Input says that its battery is discharging. The
+  app now believes the second: no "charging", and the icon shows no level, because the
+  dongle does not report a real one (it always says 100%).
 
 ## [1.12.0] - 2026-09-28
 
