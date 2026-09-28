@@ -106,24 +106,40 @@ class HyperXCloud3Provider(Provider):
         self._diag.append(f"  no usage {USAGE_PAGE:04x}:{USAGE:04x} collection (found: {offered})")
         return None
 
-    def _write(self, dev, packet: List[int]) -> bool:
-        """write() first, then the feature-report fallback some dongles need on Windows."""
+    @staticmethod
+    def _error(dev) -> str:
+        """hidapi's text for the last failure (on Windows, the system error message)."""
         try:
-            dev.write(packet)
-            return True
-        except (OSError, IOError, ValueError) as e:
-            msg = str(e).lower()
-            if not any(s in msg for s in _FEATURE_ONLY):
-                self._diag.append(f"  write: {e}")
-                return False
-            self._diag.append(f"  write: {e} -> retrying as a feature report")
-            try:
-                dev.send_feature_report(packet)
-                self._diag.append("  feature report accepted")
+            return str(dev.error() or "")
+        except Exception:
+            return ""
+
+    def _write(self, dev, packet: List[int]) -> bool:
+        """write() first, then the feature-report fallback some dongles need on Windows.
+        cython-hidapi returns -1 from write() and send_feature_report() on failure rather
+        than raising, so a negative result counts as a failure, with dev.error() as its
+        text. Some builds raise instead; both paths end up in the same check."""
+        try:
+            n = dev.write(packet)
+            if n is not None and n >= 0:
                 return True
-            except (OSError, IOError, ValueError) as e2:
-                self._diag.append(f"  feature report: {e2}")
+            err = f"-> {n} {self._error(dev)}".rstrip()
+        except (OSError, IOError, ValueError) as e:
+            err = str(e)
+        if not any(s in err.lower() for s in _FEATURE_ONLY):
+            self._diag.append(f"  write: {err}")
+            return False
+        self._diag.append(f"  write: {err} -> retrying as a feature report")
+        try:
+            n = dev.send_feature_report(packet)
+            if n is not None and n < 0:
+                self._diag.append(f"  feature report -> {n} {self._error(dev)}".rstrip())
                 return False
+            self._diag.append("  feature report accepted")
+            return True
+        except (OSError, IOError, ValueError) as e2:
+            self._diag.append(f"  feature report: {e2}")
+            return False
 
     def _query(self, path: bytes, cmd: int, expected: tuple) -> Optional[List[int]]:
         """Send one command and return the first reply carrying the echo or response id."""

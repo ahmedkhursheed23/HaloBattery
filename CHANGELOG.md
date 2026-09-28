@@ -79,6 +79,9 @@ models). See [Unreleased] below.
   channel): the Bluetooth reading was hidden as a duplicate and only the grey "no link"
   icon of the receiver was left. The Bluetooth reading is now hidden only while the
   receiver actually reads the device.
+- HyperX Cloud III Wireless: a dongle that takes the battery request only as a feature
+  report ("Incorrect function" on a normal write) showed no level. The app now notices
+  the refused write and sends the request as a feature report, as intended.
 
 ## [1.12.0] - 2026-09-28
 
