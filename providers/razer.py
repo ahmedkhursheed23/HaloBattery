@@ -298,6 +298,23 @@ class RazerProvider(Provider):
 
     # ---- high level ------------------------------------------------------
     def poll(self) -> List[DeviceStatus]:
+        """One icon for a mouse on its cable while its receiver stays plugged in.
+
+        On the cable the mouse is a second PID with the same name in KNOWN, and the
+        receiver then answers "not responding". Its greyed copy of the last level stayed
+        next to the live icon of the cable for ASLEEP_KEEP. A greyed icon is dropped when
+        another PID of the same model answers in the same poll. Two live icons stay: that
+        is two mice of the same model, one on the receiver and one on the cable."""
+        out = self._poll_devices()
+        models = {name for name, _tid in KNOWN.values()}
+        live: Dict[str, set] = {}       # model name -> PIDs that answered (key "razer:<pid>:...")
+        for s in out:
+            if s.online and s.name in models:
+                live.setdefault(s.name, set()).add(s.key.split(":")[1])
+        return [s for s in out
+                if s.online or not live.get(s.name, set()) - {s.key.split(":")[1]}]
+
+    def _poll_devices(self) -> List[DeviceStatus]:
         self._diag = []
         try:
             infos = hidlist.enumerate(RAZER_VID)

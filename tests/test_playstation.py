@@ -24,6 +24,8 @@ BT_PATH = (b"\\\\?\\hid#{00001124-0000-1000-8000-00805f9b34fb}_vid&0002054c_pid&
            b"#9&2b0f7c5a&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}")
 USB_PATH = b"\\\\?\\hid#vid_054c&pid_0ce6&mi_03#8&1234abcd&0&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}"
 DS4_BT_PATH = BT_PATH.replace(b"pid&0ce6", b"pid&09cc")
+# a second controller of the same model on another USB port: another device instance
+USB_PATH_2 = USB_PATH.replace(b"8&1234abcd", b"8&5678ef01")
 
 
 class Clock:
@@ -74,6 +76,15 @@ class FakePad:
         if self.mode == "full":
             return full_report(self.dualsense, self.status)
         return basic_report()
+
+
+def usb_pad(status):
+    """A DualSense on USB: streams report 0x01 with the status byte at 53."""
+    pad = FakePad("full")
+    report = [0x01] + [0] * 77
+    report[53] = status
+    pad.on_read = lambda: report
+    return pad
 
 
 class FakeBus:
@@ -187,6 +198,47 @@ class ProviderTest(unittest.TestCase):
         self.assertEqual(len(out), 1)
         self.assertEqual((out[0].level, out[0].charging), (60, True))
         self.assertEqual(bt.features, [])
+
+    # ---- two controllers of the same model on USB
+    # Over USB hidapi reports no serial number for these controllers, so the serial
+    # cannot tell two of them apart; the device instance in the HID path can.
+    def test_two_usb_controllers_get_two_icons(self):
+        a, b = usb_pad(0x08), usb_pad(0x13)          # 80 % on battery, 30 % charging
+        out = self.poll([entry(USB_PATH, mac=""), entry(USB_PATH_2, mac="")],
+                        {USB_PATH: a, USB_PATH_2: b})
+        self.assertEqual(len(out), 2)
+        self.assertEqual(len({s.key for s in out}), 2)
+        self.assertEqual(sorted((s.level, s.charging) for s in out), [(30, True), (80, False)])
+
+    def test_two_usb_controller_keys_stay_the_same_between_polls(self):
+        entries = [entry(USB_PATH, mac=""), entry(USB_PATH_2, mac="")]
+        pads = {USB_PATH: usb_pad(0x08), USB_PATH_2: usb_pad(0x13)}
+        first = {s.level: s.key for s in self.poll(entries, pads)}
+        second = {s.level: s.key for s in self.poll(list(reversed(entries)), pads)}
+        self.assertEqual(first, second)
+
+    def test_one_usb_controller_keeps_its_old_key(self):
+        # names and hidden settings are saved under the key
+        out = self.poll([entry(USB_PATH, mac="")], {USB_PATH: usb_pad(0x08)})
+        self.assertEqual([s.key for s in out], ["ps:0ce6:"])
+
+    def test_collections_of_one_usb_controller_stay_one_icon(self):
+        # one controller with two collections: same instance, the last part is the
+        # collection number
+        c1 = USB_PATH.replace(b"mi_03#", b"mi_03&col01#")
+        c2 = USB_PATH.replace(b"mi_03#", b"mi_03&col02#").replace(b"&0&0000#", b"&0&0001#")
+        out = self.poll([entry(c1, mac=""), entry(c2, mac="")],
+                        {c1: usb_pad(0x08), c2: usb_pad(0x08)})
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0].key, "ps:0ce6:")
+
+    def test_bluetooth_and_two_usb_controllers_keep_every_controller(self):
+        # one controller on Bluetooth and its cable, plus a second one on USB only
+        out = self.poll([entry(BT_PATH), entry(USB_PATH, mac=""), entry(USB_PATH_2, mac="")],
+                        {BT_PATH: FakePad("basic"), USB_PATH: usb_pad(0x16),
+                         USB_PATH_2: usb_pad(0x04)})
+        self.assertEqual(len(out), 2)
+        self.assertIn("ps:0ce6:a0ab51123456", {s.key for s in out})
 
     def test_diagnostics_say_why(self):
         self.poll([entry(BT_PATH)], {BT_PATH: FakePad("basic")})

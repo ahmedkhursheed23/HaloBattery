@@ -82,6 +82,12 @@ models). See [Unreleased] below.
 - HyperX Cloud III Wireless: a dongle that takes the battery request only as a feature
   report ("Incorrect function" on a normal write) showed no level. The app now notices
   the refused write and sends the request as a feature report, as intended.
+- Two PS4 / PS5 controllers of the same model on USB showed only one icon, with the
+  level of one of them. Each controller now has its own icon. A single controller on
+  USB keeps its icon, name and hidden setting.
+- A Razer mouse plugged in by cable while its receiver stayed in showed two icons: the
+  cable (charging) and a greyed copy from the receiver for 5 minutes. The greyed copy
+  now goes away while the same model answers on the cable.
 
 ## [1.12.0] - 2026-09-28
 

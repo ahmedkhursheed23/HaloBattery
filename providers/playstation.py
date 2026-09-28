@@ -116,6 +116,20 @@ def _battery_first(d) -> int:
     return 0 if (d.get("usage_page") == 0x01 and d.get("usage") in (0x04, 0x05)) else 1
 
 
+def _instance(path) -> str:
+    r"""The device instance from a Windows HID path, without the collection number:
+    `\\?\hid#vid_054c&pid_0ce6&mi_03#8&1234abcd&0&0000#{...}` -> `8&1234abcd&0`.
+
+    Over USB hidapi reports no serial number for these controllers, so two of the same
+    model had one group and one icon. The instance tells them apart, and it does not
+    change while the controller stays on the same port. The last `&` part is the
+    collection number and is dropped, so the collections of one controller stay
+    together (the same rule as `_instance` in providers/logitech.py)."""
+    s = path.decode("ascii", "ignore") if isinstance(path, (bytes, bytearray)) else str(path)
+    parts = s.split("#")
+    return parts[2].lower().rsplit("&", 1)[0] if len(parts) > 2 else ""
+
+
 class PlayStationProvider(Provider):
     name = "playstation"
 
@@ -222,13 +236,16 @@ class PlayStationProvider(Provider):
             return []
 
         # group interfaces by device (PID + serial); over Bluetooth the serial is
-        # the controller's MAC, over USB it is the same string for one controller
+        # the controller's MAC, over USB it is the same string for one controller.
+        # Over USB with no serial, the device instance from the path stands in for it.
         groups: Dict[Tuple[int, str], List[dict]] = {}
         for d in infos:
             pid = d["product_id"]
             if pid not in KNOWN:
                 continue
             serial = d.get("serial_number") or ""
+            if not serial and not self._is_bluetooth(d["path"]):
+                serial = "usb-" + _instance(d["path"])
             groups.setdefault((pid, serial), []).append(d)
 
         conns: List[dict] = []          # one entry per connection (transport)
@@ -263,11 +280,21 @@ class PlayStationProvider(Provider):
                 self._diag.append(f"  -> {res[0]}%{' charging' if res[1] else ''}")
             conns.append({"pid": pid, "name": name, "bluetooth": bluetooth,
                           "mac": serial if bluetooth and serial else "", "reading": res,
-                          "basic": basic})
+                          "basic": basic, "usb": "" if bluetooth else serial})
 
+        devs = self._merge(conns)
+        # A USB controller has no MAC here, so its key is "ps:<pid>:". Two of the same
+        # model on USB shared that key and showed as one icon: only then does each one
+        # add its USB id. A single controller keeps the plain key, so a name or "hidden"
+        # saved for it still applies.
+        usb_count: Dict[int, int] = {}
+        for dev in devs:
+            if not dev["mac"]:
+                usb_count[dev["pid"]] = usb_count.get(dev["pid"], 0) + 1
         out: List[DeviceStatus] = []
-        for dev in self._merge(conns):
-            key = f"ps:{dev['pid']:04x}:{dev['mac']}"
+        for dev in devs:
+            ident = dev["mac"] or (dev["usb"] if usb_count[dev["pid"]] > 1 else "")
+            key = f"ps:{dev['pid']:04x}:{ident}"
             res = dev["reading"]
             if res is None and dev.get("basic"):
                 # Bluetooth, basic mode, not switched on purpose: this is the normal state,
@@ -324,6 +351,8 @@ class PlayStationProvider(Provider):
                 self._diag.append(f"[PlayStation] pid={pid:04x}: same controller on cable and "
                                   f"Bluetooth, showing one icon")
                 out.append(dev)
+                # more controllers of this model on USB only: each keeps its own icon
+                out.extend(wired[1:])
             else:
                 out.extend(group)
         return out
