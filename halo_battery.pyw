@@ -70,8 +70,9 @@ import winevents  # noqa: E402
 from providers import hidlist  # noqa: E402
 from providers import (AstroProvider, AsusProvider, AudezeProvider,  # noqa: E402
                        BarracudaProvider, BluetoothProvider, CorsairProvider, DeviceStatus,
-                       GWolvesProvider, HyperXCloud3Provider, HyperXProvider, JblProvider,
-                       KeychronProvider, LamzuProvider, LofreeProvider, LogitechProvider,
+                       GWolvesProvider, HyperXCloud3Provider, HyperXCloud3SProvider,
+                       HyperXProvider, JblProvider, KeychronProvider, LamzuProvider,
+                       LofreeProvider, LogitechProvider,
                        MchoseProvider, NintendoProvider, PlayStationProvider, PulsarProvider,
                        RazerProvider, SteelSeriesProvider, WLmouseProvider, XInputProvider)
 from providers.bluetooth import BluetoothWatcher  # noqa: E402
@@ -690,7 +691,7 @@ class App:
                           JblProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
                           PlayStationProvider(), BarracudaProvider(), NintendoProvider(), AsusProvider(),
                           GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(),
-                          LamzuProvider()]
+                          LamzuProvider(), HyperXCloud3SProvider()]
         self.bt = BluetoothProvider()
         self.icons: Dict[str, DeviceIcon] = {}
         self.placeholder: Optional[pystray.Icon] = None
@@ -1463,7 +1464,8 @@ def probe():
                      HyperXCloud3Provider(), HyperXProvider(), KeychronProvider(), PulsarProvider(),
                      JblProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
                      PlayStationProvider(), BarracudaProvider(), NintendoProvider(), AsusProvider(),
-                     GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(), LamzuProvider()]
+                     GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(), LamzuProvider(),
+                     HyperXCloud3SProvider()]
     app.bt = BluetoothProvider()
     res = []
     for p in app.providers + [app.bt]:
