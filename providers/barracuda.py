@@ -131,11 +131,15 @@ class Session:
 
     def _write(self, frame: bytes) -> bool:
         try:
-            self.dev.write(frame)
-            return True
+            n = self.dev.write(frame)
         except (OSError, IOError) as e:
             self.diag.append(f"    write: {e}")
             return False
+        if n is not None and n < 0:
+            # hidapi reports a failed write by returning -1, not by raising
+            self.diag.append(f"    write -> {n}")
+            return False
+        return True
 
     def _drain(self):
         for _ in range(8):
@@ -204,11 +208,13 @@ def read_battery(path: bytes, diag: List[str]) -> Tuple[str, Optional[int], bool
             return "offline", None, False
         time.sleep(0.05)
         battery = s.query(CMD_BATTERY)
-        charging = s.query(CMD_CHARGING)
-        s.remote(False)
         if battery is None:
+            # no answer: the charging query would only wait out its own timeouts
+            s.remote(False)
             diag.append("    no battery reply")
             return "offline", None, False
+        charging = s.query(CMD_CHARGING)
+        s.remote(False)
         level = parse_level(battery)
         if level is None:
             diag.append(f"    battery reply out of range: {battery[:4]}")

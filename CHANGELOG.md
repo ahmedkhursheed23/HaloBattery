@@ -88,6 +88,9 @@ models). See [Unreleased] below.
 - A Razer mouse plugged in by cable while its receiver stayed in showed two icons: the
   cable (charging) and a greyed copy from the receiver for 5 minutes. The greyed copy
   now goes away while the same model answers on the cable.
+- Razer Barracuda Pro: while the headset was off, each poll waited about 4 seconds longer
+  than needed and held back the icons of all other devices. The app now stops asking as
+  soon as the headset does not answer, and it retries when the receiver refuses a command.
 
 ## [1.12.0] - 2026-09-28
 
