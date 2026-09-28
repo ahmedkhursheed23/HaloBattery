@@ -15,6 +15,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
 - HyperX Cloud III S Wireless on its dongle (03F0:02CC, #106), with the protocol of
   HyperHeadset's `cloud_iii_s_wireless`: battery and charging, read-only requests. **Unverified** on
   hardware.
+- Logitech G PRO X 2 LIGHTSPEED headset on its receiver (046D:0AF7, #103), over Logitech's
+  Centurion transport as Solaar and HeadsetControl read it: battery and charging, read-only
+  requests. **Unverified** on hardware.
 
 ### Changed
 - New tray menu in the Windows 11 style: Segoe UI Variable text, Fluent icons, an acrylic

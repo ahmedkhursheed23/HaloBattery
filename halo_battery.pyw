@@ -72,7 +72,7 @@ from providers import (AstroProvider, AsusProvider, AudezeProvider,  # noqa: E40
                        BarracudaProvider, BluetoothProvider, CorsairProvider, DeviceStatus,
                        GWolvesProvider, HyperXCloud3Provider, HyperXCloud3SProvider,
                        HyperXProvider, JblProvider, KeychronProvider, LamzuProvider,
-                       LofreeProvider, LogitechProvider,
+                       LofreeProvider, LogitechCenturionProvider, LogitechProvider,
                        MchoseProvider, NintendoProvider, PlayStationProvider, PulsarProvider,
                        RazerProvider, SteelSeriesProvider, WLmouseProvider, XInputProvider)
 from providers.bluetooth import BluetoothWatcher  # noqa: E402
@@ -691,7 +691,7 @@ class App:
                           JblProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
                           PlayStationProvider(), BarracudaProvider(), NintendoProvider(), AsusProvider(),
                           GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(),
-                          LamzuProvider(), HyperXCloud3SProvider()]
+                          LamzuProvider(), HyperXCloud3SProvider(), LogitechCenturionProvider()]
         self.bt = BluetoothProvider()
         self.icons: Dict[str, DeviceIcon] = {}
         self.placeholder: Optional[pystray.Icon] = None
@@ -1465,7 +1465,7 @@ def probe():
                      JblProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
                      PlayStationProvider(), BarracudaProvider(), NintendoProvider(), AsusProvider(),
                      GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(), LamzuProvider(),
-                     HyperXCloud3SProvider()]
+                     HyperXCloud3SProvider(), LogitechCenturionProvider()]
     app.bt = BluetoothProvider()
     res = []
     for p in app.providers + [app.bt]:
