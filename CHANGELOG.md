@@ -70,6 +70,10 @@ models). See [Unreleased] below.
   a game has already switched the controller, and the icon shows no level otherwise.
   **Preferences > PlayStation full mode (Bluetooth)** brings the old behaviour back for
   those who do not play such games. USB is unchanged.
+- The **Poll interval** was not kept while Bluetooth was on: each Bluetooth update (once a
+  minute, and several times after a device connects) also polled every mouse, keyboard
+  and headset, so a 5-minute interval became about one minute. A Bluetooth update now
+  only refreshes the Bluetooth icons; the other devices are polled at the chosen interval.
 
 ## [1.12.0] - 2026-09-28
 
