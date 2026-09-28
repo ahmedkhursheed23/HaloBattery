@@ -89,6 +89,7 @@ def make_app(cfg=None):
     app.cfg = dict(hb.DEFAULTS, **(cfg or {}))
     app.lock = threading.RLock()
     app.icons, app.missing, app.alerted, app.full_state = {}, {}, {}, {}
+    app.low_sound_at = {}
     app.placeholder = None
     app.wake = threading.Event()
     app.light_taskbar = False
@@ -409,6 +410,7 @@ class MenuLayoutTests(HideRenameTestCase):
         prefs = next(i for i in menu.items if i.text == "Preferences").submenu
         texts = [i.text for i in prefs.items if i is not hb.Menu.SEPARATOR]
         self.assertEqual(texts, ["Poll interval", "Low battery alert", "Alert when fully charged",
+                                 "Sound with the low battery alert",
                                  "Windows Bluetooth devices", "PlayStation full mode (Bluetooth)",
                                  "Device pictogram", "Charging animation", "Icon colour",
                                  "Start with Windows", "Check for updates"])

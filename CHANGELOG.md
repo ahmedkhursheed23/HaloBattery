@@ -36,6 +36,10 @@ models). See [Unreleased] below.
   hardware.
   HyperHeadset's `cloud_iii_s_wireless`, sent as output reports the way NGENUITY sends them: battery and charging, read-only requests. **Verified on hardware** in #106: 89 %, the same level as
   NGENUITY.
+- **Preferences > Sound with the low battery alert** (off by default), for full-screen
+  games where the notification is not seen (#66). The low battery alert then also plays
+  Windows' own "Battery Low" sound ("Battery Critical" at 5% or less), and plays it again
+  every 5 minutes while the device stays low, awake and off the charger.
 
 ### Changed
 - New tray menu in the Windows 11 style: Segoe UI Variable text, Fluent icons, an acrylic

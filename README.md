@@ -100,6 +100,7 @@ Right-click a device icon to open its menu. It looks like a Windows 11 menu (acr
 - **Preferences**:
   - **Poll interval** (15 s to 5 min) and **Low battery alert** (off, 10–30%): change them with the − and + buttons or the mouse wheel, the menu stays open
   - **Alert when fully charged** (a notification once per charge, on by default)
+  - **Sound with the low battery alert** (off by default): also play the Windows "Battery Low" sound ("Battery Critical" at 5% or less), for full-screen games where the notification is not seen. It plays again every 5 minutes while the device stays low and off the charger
   - **Windows Bluetooth devices**, **Device pictogram**, **Charging animation**
   - **PlayStation full mode (Bluetooth)** (off by default): always read the battery of a PS4 / PS5 controller over Bluetooth. Some games stop seeing the controller in that mode until it is turned off and on
   - **Icon colour**: Automatic (the Windows theme, or MyDockFinder's menu bar while it is running), White or Black
