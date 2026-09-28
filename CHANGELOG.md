@@ -20,7 +20,7 @@ models). See [Unreleased] below.
   takes the commands (2 or 3) come from OpenRazer's keyboard driver. The icon shows the
   keyboard pictogram. **Unverified** on hardware.
 - HyperX Cloud III S Wireless on its dongle (03F0:02CC, #106), with the protocol of
-  HyperHeadset's `cloud_iii_s_wireless`: battery and charging, read-only requests. **Unverified** on
+  HyperHeadset's `cloud_iii_s_wireless`, sent as output reports the way NGENUITY sends them: battery and charging, read-only requests. **Unverified** on
   hardware.
 - Logitech G PRO X 2 LIGHTSPEED headset on its receiver (046D:0AF7, #103), over Logitech's
   Centurion transport as Solaar and HeadsetControl read it: battery and charging, read-only
