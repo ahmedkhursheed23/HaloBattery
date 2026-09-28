@@ -76,6 +76,7 @@ from providers import (AstroProvider, AsusProvider, AudezeProvider,  # noqa: E40
                        MchoseProvider, NintendoProvider, PlayStationProvider, PulsarProvider,
                        RazerProvider, SteelSeriesProvider, WLmouseProvider, XInputProvider)
 from providers.bluetooth import BluetoothWatcher  # noqa: E402
+from providers.jbl import PROBE_LISTEN_S as JBL_PROBE_LISTEN_S  # noqa: E402
 
 HEADSET_WORDS = ("blackshark", "kraken", "barracuda", "nari", "thresher", "headset",
                  "headphone", "earbud", "buds", "hammerhead", "airpods")
@@ -1523,7 +1524,8 @@ def probe():
     app.cfg = load_config()
     app.providers = [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
                      HyperXCloud3Provider(), HyperXProvider(), KeychronProvider(), PulsarProvider(),
-                     JblProvider(), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
+                     JblProvider(listen_first=JBL_PROBE_LISTEN_S), LogitechProvider(),
+                     SteelSeriesProvider(), XInputProvider(),
                      PlayStationProvider(), BarracudaProvider(), NintendoProvider(), AsusProvider(),
                      GWolvesProvider(), LofreeProvider(), AstroProvider(), CorsairProvider(), LamzuProvider(),
                      HyperXCloud3SProvider(), LogitechCenturionProvider()]

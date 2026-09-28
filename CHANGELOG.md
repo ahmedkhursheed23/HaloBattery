@@ -91,6 +91,10 @@ models). See [Unreleased] below.
 - Razer Barracuda Pro: while the headset was off, each poll waited about 4 seconds longer
   than needed and held back the icons of all other devices. The app now stops asking as
   soon as the headset does not answer, and it retries when the receiver refuses a command.
+- JBL Quantum 910: while its receiver was plugged in, every poll waited up to 10 seconds for
+  the headset to speak and held back the icons of all other devices. The app now listens
+  to the receiver all the time in the background, so polls do not wait, and a level the
+  headset sends between polls is no longer missed.
 
 ## [1.12.0] - 2026-09-28
 
