@@ -4,6 +4,10 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [1.13.0.1] - 2026-10-03
+
+Test build: 1.13.0 plus #208 (Corsair Virtuoso SE / XT, #204) and #209 (Keep disconnected devices until restart, #151).
+
 ## [Unreleased]
 
 ### Added
@@ -11,6 +15,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
   cable (#204), from HeadsetControl (`corsair_virtuoso_xt.hpp`, commit 8292ac41). Charging
   is not shown, as HeadsetControl does not decode it. **Unverified** on hardware; the
   receiver id 1B1C:0A40 from #204 is not in HeadsetControl and needs the reporter's test.
+- Preferences > "Keep disconnected devices until restart" (off by default): the icon of a controller, headset or Bluetooth device that disconnects stays in the tray, greyed, with its last level, until the device comes back or the app restarts (#151).
 
 ## [1.13.0] - 2026-09-29
 
