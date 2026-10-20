@@ -135,7 +135,8 @@ from providers import hidlist  # noqa: E402
 from providers import (AmInfinityProvider, AstroProvider, AsusProvider,  # noqa: E402
                        AudezeProvider, BarracudaProvider, BluetoothProvider, CorsairProvider, DeviceStatus,
                        EightBitDoProvider,
-                       GWolvesProvider, HyperXAlpha2Provider, HyperXCloud3Provider, HyperXCloud3SProvider,
+                       GWolvesProvider, HyperXAlpha2Provider, HyperXAlphaWirelessProvider, HyperXCloud3Provider,
+                       HyperXCloud3SProvider,
                        HyperXProvider, JblProvider,
                        KeychronProvider, LamzuProvider, LofreeProvider, LogitechProvider,
                        LogitechCenturionProvider,
@@ -189,6 +190,7 @@ PROVIDER_LABELS = {
     "gwolves": "G-Wolves mice",
     "hyperx": "HyperX Cloud II Wireless",
     "hyperx_alpha2": "HyperX Cloud Alpha 2",
+    "hyperx_alpha_wireless": "HyperX Cloud Alpha Wireless",
     "hyperx_cloud3": "HyperX Cloud III Wireless, Cloud II Core Wireless",
     "hyperx_cloud3s": "HyperX Cloud III S Wireless",
     "jbl": "JBL Quantum",
@@ -214,7 +216,7 @@ PROVIDER_LABELS = {
 def make_providers(jbl_listen_first: float = 0.0) -> list:
     # jbl_listen_first: only --probe passes it, so its single poll waits for a JBL level
     return [RazerProvider(), AudezeProvider(), WLmouseProvider(), MchoseProvider(),
-            HyperXAlpha2Provider(), HyperXCloud3Provider(), HyperXProvider(),
+            HyperXAlpha2Provider(), HyperXAlphaWirelessProvider(), HyperXCloud3Provider(), HyperXProvider(),
             KeychronProvider(), PulsarProvider(),
             JblProvider(listen_first=jbl_listen_first), LogitechProvider(), SteelSeriesProvider(), XInputProvider(),
             PlayStationProvider(), EightBitDoProvider(), BarracudaProvider(), NintendoProvider(),

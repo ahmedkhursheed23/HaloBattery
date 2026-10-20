@@ -6,6 +6,12 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **HyperX Cloud Alpha Wireless** (2.4 GHz dongle, 03F0:098D; #220): the level and the
+  charging state, from the `21 bb` exchange that HeadsetControl and HyperXBatteryMonitor
+  both use; a grey icon when the headset is off. Not yet confirmed on hardware - the
+  reporter, @seriousdev-gh, can test it.
+
 ### Changed
 - **A tidier repository and a shorter README**: the app's modules moved into the `halo/`
   package (`halo_battery.pyw` stays the entry point), the .bat helpers into `scripts/`

@@ -36,6 +36,14 @@ The routed exchange the Dark Core row describes, framed on report `0x02`: the re
 
 The battery collection is picked by usage page, 0xFF13:0xFF00. A 64-byte output report `50 02 00 00 ...` is answered by the input report starting `51 02`: the level is index 2 as a plain percentage, and bit 7 of index 6 was set after a recharge and clear before it, so it is shown as charging. Both were taken from two USBPcap captures of NGENUITY attached to issue #26, at 51 % and 67 %, and matched to the percentage NGENUITY displayed at the time; the `61 02` frame is byte-identical across the two states, so it is not the battery, and a level above 100 is refused rather than shown. **Confirmed on real hardware** by @azizen12 - the percentage was right on the station's first test. With NGENUITY running the station also emits thousands of `ff 01` / `44`-`45` housekeeping frames (its diagnostics showed the app reading only those); stale reports are therefore drained before the request and the reply is read until it arrives, so the two applications can run side by side - both states confirmed by @azizen12 on the final build. Credit for the captures: @azizen12.
 
+### HyperX Cloud Alpha Wireless
+
+**Connection:** 2.4 GHz dongle (03F0:098D)
+
+The vendor collection of interface 3 is picked by usage page, 0xFF43:0x0202 (the same interface also carries a consumer-control collection, 000C:0001, which cannot declare report `0x21`). A 31-byte output report `21 bb <selector> 00 ...` is answered by an input report that echoes `21 bb <selector>`, with the answer in byte 3: selector `0x03` is the connection (1 = headset not connected), `0x0C` the charging state (1 = charging, 0 = not) and `0x0B` the level as a plain percentage (a value above 100 is refused). When the headset is not connected, or the dongle does not answer, the icon is greyed. While the headset charges the level is still asked for and shown with the charging flag. The dongle also sends unsolicited reports (`25` level, `26` charging, `23` mute), so only a reply that echoes the asked selector is used. Both sources write an output report, never a feature report. **Not yet confirmed on hardware** - requested in [#220](https://github.com/HeyOkay/HaloBattery/issues/220).
+
+Sources: [HeadsetControl `lib/devices/hyperx_cloud_alpha_wireless.hpp`](https://github.com/Sapd/HeadsetControl/blob/d4fb352721a715aefc07968be30225cc5a7e554f/lib/devices/hyperx_cloud_alpha_wireless.hpp) (commit d4fb352; selectors `0x03`, `0x0C`, `0x0B`; it reports no level while charging) and [HyperXBatteryMonitor `Devices/CloudAlphaWirelessDevice.cs`](https://github.com/davidsantanaalves/HyperXBatteryMonitor/blob/9d01847913f4947de77e56bb05347dffc19937cd/Devices/CloudAlphaWirelessDevice.cs) (commit 9d01847; selectors `0x0B` and `0x0C`, opens `MI_03&Col01`, reads the level next to the charging state).
+
 ### HyperX Cloud II Core Wireless
 
 **Connection:** 2.4 GHz dongle (03F0:0995) or its second mode (03F0:0795)
