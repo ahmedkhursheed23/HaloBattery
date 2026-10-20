@@ -16,6 +16,7 @@ Run from the repository root:
 import os
 import sys
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -118,6 +119,31 @@ class PollPaTest(unittest.TestCase):
         self.script({b"wrong": ("nowake", None), b"right": ("ok", 78)})
         res, level, _ = p._poll_pa(("k",), [a, b])
         self.assertEqual((res, level), (razer.STATUS_OK, 78))
+
+
+class BarracudaProReceiverTest(unittest.TestCase):
+    """Receiver 1532:0583 (issue #217) is read with the PA frames, like 0555/0556."""
+
+    def test_0583_is_a_pa_receiver_and_a_wireless_candidate(self):
+        self.assertIn(0x0583, blackshark.PA_PIDS)
+        self.assertTrue(razer.maybe_wireless(0x0583, "Razer Barracuda Pro 2.4"))
+
+    def test_0583_is_polled_with_pa_frames_under_its_product_name(self):
+        info = dict(product_id=0x0583, vendor_id=0x1532, serial_number="", path=b"p",
+                    product_string="Razer Barracuda Pro 2.4", interface_number=3,
+                    usage_page=0xFF00, usage=0x0001)
+        p = razer.RazerProvider()
+        with patch("providers.razer.hidlist.enumerate", return_value=[info]), \
+                patch.object(p, "_poll_pa", return_value=(razer.STATUS_OK, 94, False)) as pa, \
+                patch.object(p, "_poll_group") as generic:
+            out = p.poll()
+        self.assertEqual([(d.name, d.level) for d in out], [("Razer Barracuda Pro 2.4", 94)])
+        pa.assert_called_once()
+        generic.assert_not_called()
+
+    def test_the_older_barracuda_provider_does_not_claim_0583(self):
+        from providers import barracuda
+        self.assertNotEqual(barracuda.PID, 0x0583)
 
 
 if __name__ == "__main__":

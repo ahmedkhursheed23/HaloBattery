@@ -6,6 +6,12 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Razer Barracuda Pro 2.4 GHz receiver 1532:0583 shows a level** (#217): this newer
+  revision does not answer the mouse request, so it showed "poll failed". It answers the
+  BlackShark V2 Pro (2023) "PA" frames, so it is read that way. Confirmed on hardware by
+  @lacwer, whose Barracuda Pro read 94%.
+
 ### Changed
 - **A tidier repository and a shorter README**: the app's modules moved into the `halo/`
   package (`halo_battery.pyw` stays the entry point), the .bat helpers into `scripts/`

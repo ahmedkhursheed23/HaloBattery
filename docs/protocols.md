@@ -74,9 +74,11 @@ Not HID++ on ff43: Logitech's "Centurion" transport on the vendor collection `ff
 
 ### Razer Barracuda Pro (2.4 GHz)
 
-**Connection:** 2.4 GHz dongle (1532:053a)
+**Connection:** 2.4 GHz dongle (1532:053a; newer revision 1532:0583, see below)
 
 Its receiver publishes two collections and neither answers the standard Razer mouse request this app sends. The headset speaks the "PA" protocol instead: 64-byte vendor frames, `P`,`A` out and `P`,`I` back, battery command `0x21` with the level in the reply's data byte, charging `0x2A`. Decoded from a USBPcap capture of Razer Synapse on a real unit (it read 34%), then confirmed on hardware with @phl23's own Barracuda Pro: the level tracks (27% at the test), charging follows the charger, and a switched-off headset reports "no link" rather than a stale value. Over Bluetooth Windows reports the level itself.
+
+The newer revision with receiver 1532:0583 does not use this layout. It answers the BlackShark V2 Pro (2023) "PA" frames below (output report 0x02 on interface 3, collection ff00:0001; battery `0x21` and charging `0x2A` both answer). That came from @lacwer's own test on a real unit (the level read 94%), not from a capture, so it is listed with the 2023 receivers.
 
 ### Razer BlackShark V2 Pro (2020)
 
@@ -102,7 +104,7 @@ On battery and after charge completion, it displays the reported level unchanged
 
 ### Razer BlackShark V2 Pro (2023)
 
-**Connection:** 2.4 GHz receiver (1532:0555)
+**Connection:** 2.4 GHz receiver (1532:0555, 1532:0556; the Razer Barracuda Pro receiver 1532:0583 uses the same frames)
 
 The headset's own "PA" protocol: output reports 0x02 on the vendor interface 0xFF00, remote mode 0xE1, commands 0x21 (battery) and 0x2A (charging)
 
