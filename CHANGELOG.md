@@ -13,6 +13,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
   features and settings is in `docs/features.md` and the credits in `docs/credits.md`.
 
 ### Fixed
+- **A Steam Controller no longer holds up every other device for 5 s per poll**: the
+  read now stops at the controller's battery report instead of listening for the whole
+  5 s window, so the other icons update sooner.
 - **Start-up with portable mode no longer hangs in a folder it cannot write to**: the
   check whether the app folder is writable used `tempfile`, which on Windows retries
   forever when the folder's permissions deny creating files (Program Files). It is now one

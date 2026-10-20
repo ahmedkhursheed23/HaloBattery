@@ -167,6 +167,7 @@ class SteamProvider(Provider):
                     parsed = parse_battery(data)
                     if parsed is not None:
                         res["battery"] = parsed
+                        break            # what the long window is for: stop here
                     else:
                         self._diag.append(f"    report 0x43 carries no level: "
                                           f"{hexdump(data, 16)}")

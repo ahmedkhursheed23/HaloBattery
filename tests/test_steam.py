@@ -174,6 +174,24 @@ class PollTest(ProviderTest):
                          [(None, True, S.NOT_REPORTED)])
         self.assertGreaterEqual(self.clock.now - start, S.BATTERY_WINDOW - 0.05)
 
+    def test_the_read_stops_at_the_battery_report(self):
+        # the state stream never idles: without a stop the loop ran the whole
+        # window, holding the poll thread that every device shares
+        class Endless(FakePuck):
+            reads = 0
+
+            def on_read(self):
+                self.reads += 1
+                return super().on_read() or state_report()
+
+        puck = Endless([state_report()] * 3 + [battery(1, 64)])
+        start = self.clock.now
+        res = self.poll([entry(PUCK, 2)], {path_for(PUCK, 2): puck}, advance=True)
+        self.assertEqual([(r.level, r.charging, r.online) for r in res],
+                         [(64, False, True)])
+        self.assertEqual(puck.reads, 4)
+        self.assertLess(self.clock.now - start, S.WINDOW)
+
     def test_a_quiet_slot_does_not_wait_the_battery_window(self):
         start = self.clock.now
         res = self.poll([entry(PUCK, 2)], {path_for(PUCK, 2): FakePuck()},
