@@ -949,6 +949,9 @@ class DeviceIcon:
             if animate:
                 self.frames = art
                 self.icon.icon = art[self.app.anim_tick % len(art)]
+                wake = getattr(self.app, "anim_wake", None)
+                if wake is not None:
+                    wake.set()                  # anim_loop sleeps while nothing charges
             else:
                 self.frames = None
                 self.icon.icon = art
@@ -1073,6 +1076,7 @@ class App:
         self.bt_cache: List[DeviceStatus] = []
         self.hid_results: List[DeviceStatus] = []   # the last poll, before the Bluetooth merge
         self.anim_tick = 0
+        self.anim_wake = threading.Event()    # an icon has started its charging frames
         self.bt_wake = threading.Event()      # "poll Bluetooth now"
         self.bt_fresh = threading.Event()     # fresh result for diagnostics
         self.bt_watch: Optional[BluetoothWatcher] = None
@@ -1971,9 +1975,17 @@ class App:
                     prev_input = in_now
 
     def anim_loop(self):
-        """Advances the "breathing" frames of charging devices; other icons are left alone."""
+        """Advances the "breathing" frames of charging devices; other icons are left alone.
+        While nothing charges, the thread sleeps until an icon starts its frames instead of
+        waking ten times a second for nothing."""
         step = icons.BREATH_PERIOD / icons.BREATH_FRAMES
-        while not self.stop_evt.wait(step):
+        while not self.stop_evt.is_set():
+            self.anim_wake.clear()      # before the check: frames set after it wake the wait
+            if not any(ic.frames for ic in list(self.icons.values())):
+                self.anim_wake.wait()   # DeviceIcon._update or quit() sets it
+                continue
+            if self.stop_evt.wait(step):
+                return
             self.anim_tick += 1
             for ic in list(self.icons.values()):
                 ic.tick(self.anim_tick)
@@ -2220,6 +2232,7 @@ class App:
             except OSError as e:
                 log.warning("status file: %s", e)
         self.update_wake.set()
+        self.anim_wake.set()
         self.theme_evt.set()
         if self.win_events is not None:
             self.win_events.stop()

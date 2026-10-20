@@ -25,6 +25,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
   (#236): Windows reports no Bluetooth battery for it, and the icon said only
   "connected". The controller's own coarse level (empty / low / medium / full) is shown
   instead; when Windows does report a Bluetooth level, that one is still used.
+- **Fewer wakeups while nothing charges**: the charging animation's thread woke ten times
+  a second for as long as the app ran, even with no device charging. It now sleeps until
+  a device starts charging, which lets the CPU stay idle longer on a laptop.
 
 ## [1.15.0] - 2026-10-12
 
