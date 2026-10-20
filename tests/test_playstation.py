@@ -199,6 +199,45 @@ class ProviderTest(unittest.TestCase):
         self.assertEqual((out[0].level, out[0].charging), (60, True))
         self.assertEqual(bt.features, [])
 
+    # ---- a controller that never yields a battery reading (another app holds it)
+    def poll_unreadable(self, entries=None):
+        entries = [entry(BT_PATH)] if entries is None else entries
+        return self.poll(entries, {})               # open fails on every poll
+
+    def test_unreadable_controller_stops_pending_after_the_window_for_good(self):
+        out = self.poll_unreadable()
+        self.assertTrue(self.provider.pending)
+        self.assertIn("not reported yet", out[0].approx)
+        self.clock.now += P.PENDING_WINDOW - 30
+        self.poll_unreadable()
+        self.assertTrue(self.provider.pending)
+        self.clock.now += 60                        # window over
+        for _ in range(5):
+            out = self.poll_unreadable()
+            self.assertFalse(self.provider.pending)
+            self.assertIn("not readable", out[0].approx)
+            self.clock.now += 3
+
+    def test_give_up_message_is_reported_once(self):
+        self.poll_unreadable()
+        self.clock.now += P.PENDING_WINDOW + 1
+        lines = []
+        for _ in range(4):
+            self.poll_unreadable()
+            lines += [d for d in self.provider._diag if "no battery report" in d]
+            self.clock.now += 3
+        self.assertEqual(len(lines), 1)
+
+    def test_unplugged_controller_gets_a_fresh_window_when_it_returns(self):
+        self.poll_unreadable()
+        self.clock.now += P.PENDING_WINDOW + 1
+        self.poll_unreadable()
+        self.assertFalse(self.provider.pending)
+        self.poll_unreadable([])                    # unplugged
+        self.clock.now += P.PENDING_WINDOW + 1
+        self.poll_unreadable()                      # plugged in again
+        self.assertTrue(self.provider.pending)
+
     # ---- two controllers of the same model on USB
     # Over USB hidapi reports no serial number for these controllers, so the serial
     # cannot tell two of them apart; the device instance in the HID path can.

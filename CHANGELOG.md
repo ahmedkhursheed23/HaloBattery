@@ -13,6 +13,10 @@ and the project follows [Semantic Versioning](https://semver.org/).
   features and settings is in `docs/features.md` and the credits in `docs/credits.md`.
 
 ### Fixed
+- **A PlayStation controller another app holds no longer makes the app poll every 3 s
+  forever**: after the 2-minute wait the provider forgot it had given up, so the next poll
+  started a new 2-minute wait. It now gives up once and starts again only if the
+  controller is unplugged and plugged in.
 - **Start-up with portable mode no longer hangs in a folder it cannot write to**: the
   check whether the app folder is writable used `tempfile`, which on Windows retries
   forever when the folder's permissions deny creating files (Program Files). It is now one
