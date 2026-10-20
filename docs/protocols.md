@@ -78,7 +78,7 @@ Not HID++ on ff43: Logitech's "Centurion" transport on the vendor collection `ff
 
 Its receiver publishes two collections and neither answers the standard Razer mouse request this app sends. The headset speaks the "PA" protocol instead: 64-byte vendor frames, `P`,`A` out and `P`,`I` back, battery command `0x21` with the level in the reply's data byte, charging `0x2A`. Decoded from a USBPcap capture of Razer Synapse on a real unit (it read 34%), then confirmed on hardware with @phl23's own Barracuda Pro: the level tracks (27% at the test), charging follows the charger, and a switched-off headset reports "no link" rather than a stale value. Over Bluetooth Windows reports the level itself.
 
-The newer revision with receiver 1532:0583 does not use this layout. It answers the BlackShark V2 Pro (2023) "PA" frames below (output report 0x02 on interface 3, collection ff00:0001; battery `0x21` and charging `0x2A` both answer). That came from @lacwer's own test on a real unit (the level read 94%), not from a capture, so it is listed with the 2023 receivers.
+The newer revision with receiver 1532:0583 is read with the BlackShark V2 Pro (2023) "PA" frames below (the 053a layout was not tried on it). It answers them (output report 0x02 on interface 3, collection ff00:0001; battery `0x21` and charging `0x2A` both answer). That came from @lacwer's own test on a real unit (the level read 94%), not from a capture, so it is listed with the 2023 receivers.
 
 ### Razer BlackShark V2 Pro (2020)
 
