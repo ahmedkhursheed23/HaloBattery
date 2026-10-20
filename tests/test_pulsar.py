@@ -63,6 +63,23 @@ HITSCAN_SHAPE = [
 CRAZYLIGHT_DONGLE = bytes.fromhex("08 04 00 00 00 02 14 00 0d ea 00 00 00 00 00 00 3c")
 CRAZYLIGHT_CABLE = bytes.fromhex("08 04 00 00 00 02 19 01 0e 52 00 00 00 00 00 00 cd")
 
+# G-Wolves' 8K receiver 33e4:3854, from its owner's probe output in #82 / #297: the
+# collections in the order Windows listed them (out=17 on ff02:0002, out=49 on
+# ff06:0002, a feature report only on ff04:0002, of 8 bytes) and the one reply
+GWOLVES_SHAPE = [
+    (1, 0xFF02, 0x0002),
+    (0, 0x0001, 0x0002),
+    (1, 0x0001, 0x0002),
+    (1, 0x0001, 0x0080),
+    (1, 0x000C, 0x0001),
+    (1, 0xFF03, 0x0000),
+    (1, 0xFF04, 0x0002),
+    (1, 0xFF05, 0x0000),
+    (1, 0xFF06, 0x0002),
+    (2, 0x0001, 0x0006),
+]
+GWOLVES_REPLY = bytes.fromhex("08 04 00 00 00 02 50 00 0f ad 00 00 00 00 00 00 3b")
+
 
 def reply(level, power=0, mv=0, command=P.CMD_POWER, header=P.PAYLOAD_HEADER,
           break_checksum=False):
@@ -346,6 +363,23 @@ class PulsarTest(unittest.TestCase):
         self.assertEqual(100, found[0].level)
         self.assertEqual("pulsar:37700200", found[0].key)
         self.assertEqual([(0xFF02, 0x0002)], bus.written())
+
+    def test_the_gwolves_8k_receiver_is_read(self):
+        # #297: the probe sent exactly make_request() to ff02:0002 and got this reply
+        bus = self.one_receiver(vid=0x33E4, pid=0x3854, replies=[GWOLVES_REPLY],
+                                shape=GWOLVES_SHAPE,
+                                lengths={(0xFF02, 0x0002): 17, (0xFF06, 0x0002): 49})
+        found = P.PulsarProvider().poll()
+        self.assertEqual(1, len(found))
+        self.assertEqual("pulsar:33e43854", found[0].key)
+        self.assertEqual("G-Wolves mouse (8K receiver)", found[0].name)
+        self.assertEqual((80, False, True), (found[0].level, found[0].charging,
+                                             found[0].online))
+        self.assertEqual("mouse", found[0].kind)
+        self.assertEqual([(0xFF02, 0x0002)], bus.written())
+        sent = next(c for c in bus.cols if c.sent).sent
+        self.assertEqual([P.make_request()], sent)
+        self.assertEqual(4013, P.voltage_mv(GWOLVES_REPLY))
 
     def test_the_hitscan_on_its_cable_is_read(self):
         self.one_receiver(vid=0x3770, pid=0x0100, replies=[reply(74, 1, 4000)],

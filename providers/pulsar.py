@@ -10,6 +10,12 @@ Protocol from andrewrabert/python-pulsar-mouse-tool, which also backs the
   * the Kysona M600 and the VXE Dragonfly R1 Pro use the same protocol (their ids are
     not in the tool, so they are not claimed here).
 
+G-Wolves' shared 8K receiver (33e4:3854) is claimed from its owner's own probe (#82,
+#297): the power query below, sent to its ff02:0002 collection, got the reply
+08 04 00 00 00 02 50 00 0f ad .. 3b (80 %, not charging, 4013 mV, valid checksum).
+G-Wolves' web driver lists this receiver for its feature-report exchange
+(providers/gwolves.py), but this unit has no collection with that feature report.
+
 The cable id (3554:f58c) is claimed too, from the reporter's second report in #87: the
 wired mouse lists the same eight collections as the receiver, and the panel below reads it
 with the same command 0x04 frame. Both transports are confirmed on that reporter's
@@ -170,6 +176,12 @@ PIDS: Dict[int, Dict[int, str]] = {
     0x3710: {
         0x5406: "Pulsar X2 CrazyLight Mini (2.4 GHz)",
         0x3414: "Pulsar X2 CrazyLight Mini (wired)",
+    },
+    # G-Wolves' shared 8K receiver: the WARG's owner ran the read-only probe from #82
+    # on his unit (#297). This frame on ff02:0002 got a valid power reply (80 %, 4013
+    # mV); the receiver has no 64-byte feature report, so gwolves.py sends nothing to it.
+    0x33E4: {
+        0x3854: "G-Wolves mouse (8K receiver)",
     },
 }
 

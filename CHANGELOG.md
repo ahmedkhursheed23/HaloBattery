@@ -6,6 +6,13 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **G-Wolves 8K receiver (33E4:3854) shows a level** (#297, #82): it is read with the
+  Compx power query that the Pulsar / ATK / VXE mice use, on its `ff02:0002`
+  collection. The WARG owner's read-only probe got a valid reply there (80 %, 4013 mV).
+  The receiver has no 64-byte feature report, so the G-Wolves feature-report exchange
+  never sent anything to it. Not yet confirmed in the app.
+
 ### Changed
 - **A tidier repository and a shorter README**: the app's modules moved into the `halo/`
   package (`halo_battery.pyw` stays the entry point), the .bat helpers into `scripts/`

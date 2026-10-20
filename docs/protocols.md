@@ -162,6 +162,8 @@ HSK Pro / Plus / Lite, HSK Plus ACE, HTX, HTX ACE, HTX Mini, HTS Plus, HTS Plus 
 
 The same feature report exchange as the WLmouse mice (`00 00 02 02 00 83` out, `a1 ... 83 <charging> <battery%>` back), which G-Wolves' web driver mouse.xyz uses for every mouse on this receiver. The request goes only to the collection that Windows reports with a 64-byte feature report (HidP_GetCaps), as the web driver chooses it. A sleeping mouse keeps its last value on a greyed icon. **Unverified** - no G-Wolves mouse was on hand
 
+The 8K receiver of a WARG owner ([#82](https://github.com/HeyOkay/HaloBattery/issues/82), [#297](https://github.com/HeyOkay/HaloBattery/issues/297)) has no 64-byte feature report on any collection, so the exchange above sends nothing to it. His read-only probe sent the Compx power query of the Pulsar / ATK / VXE row (`08 04 00 ... 49`) to `ff02:0002` and got a valid reply: `08 04 00 00 00 02 50 00 0f ad ... 3b` (80 %, not charging, 4013 mV). So `33E4:3854` is also read with that query (`providers/pulsar.py`), under the name "G-Wolves mouse (8K receiver)". **Unverified in the app**
+
 ### Hitscan Hyperlight
 
 **Connection:** 2.4 GHz receiver (3770:0200) or USB cable (3770:0100)
