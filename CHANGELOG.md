@@ -6,6 +6,12 @@ and the project follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Razer Viper V3 Pro SE shows a level** (#255): the receiver (1532:00DF) and the cable
+  (1532:00DE) are now in the model table with transaction id `0x1F`, as OpenRazer reads
+  them. The mouse was skipped before as "not a known wireless device". Not yet confirmed
+  on hardware.
+
 ### Changed
 - **A tidier repository and a shorter README**: the app's modules moved into the `halo/`
   package (`halo_battery.pyw` stays the entry point), the .bat helpers into `scripts/`

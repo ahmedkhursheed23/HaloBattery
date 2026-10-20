@@ -86,6 +86,10 @@ OPENRAZER_CHARGE_LEVEL = {
     0x00D4: 0x1F,   # BASILISK_MOBILE_RECEIVER
     0x00D6: 0x1F,   # BASILISK_V3_PRO_35K_PHANTOM_GREEN_EDITION_WIRED
     0x00D7: 0x1F,   # BASILISK_V3_PRO_35K_PHANTOM_GREEN_EDITION_WIRELESS
+    # added from OpenRazer commit 477f4d6d3ab7 (Viper V3 Pro SE); the rest of the list
+    # is still the older copy
+    0x00DE: 0x1F,   # VIPER_V3_PRO_SE_WIRED
+    0x00DF: 0x1F,   # VIPER_V3_PRO_SE_WIRELESS
 }
 
 # In OpenRazer's list, but not in the app's table on purpose (see providers/razer.py).
@@ -166,6 +170,15 @@ class PollTest(unittest.TestCase):
         R.hidlist = types.SimpleNamespace(enumerate=lambda vid=0: list(entries))
         return R.RazerProvider().poll()
 
+    def test_the_viper_v3_pro_se_receiver_shows_its_level(self):
+        # the diagnostics in issue #255: pid 00df, product string without a wireless word
+        e = entry(0x00DF, b"vse", "Razer Viper V3 Pro SE")
+        mouse = FakeMouse(tid=0x1F, raw_level=0xB5, charging=0)
+        out = self.poll([e], {b"vse": mouse})
+        self.assertEqual([(d.name, d.level) for d in out],
+                         [("Razer Viper V3 Pro SE", round(0xB5 / 255 * 100))])
+        self.assertEqual(mouse.tids[0], 0x1F)
+
     def test_the_blackwidow_answers_through_its_own_collection(self):
         # The keyboard answers on a control collection that is not a vendor page, so
         # the probe order (which ranks 0001/ff00 first) must still reach it. The fake's
@@ -205,6 +218,13 @@ class TableTest(unittest.TestCase):
         self.assertEqual(R.KNOWN[0x0090][0], "Razer Naga Pro")
         self.assertEqual(R.KNOWN[0x00A7][0], "Razer Naga V2 Pro")
         self.assertEqual(R.KNOWN[0x00A8][0], "Razer Naga V2 Pro")
+
+    def test_viper_v3_pro_se_wired_and_wireless_share_a_name_and_tid(self):
+        # issue #255: the receiver 1532:00DF was skipped as "not a known wireless device"
+        # (its product string has no wireless word). OpenRazer reads both ids with 0x1f.
+        self.assertEqual(R.KNOWN[0x00DE], ("Razer Viper V3 Pro SE", 0x1F))
+        self.assertEqual(R.KNOWN[0x00DF], R.KNOWN[0x00DE])
+        self.assertNotEqual(R.KNOWN[0x00DF], R.KNOWN[0x00C1])    # not the Viper V3 Pro
 
     def test_the_blackwidow_pro_pair_is_known(self):
         # OpenRazer lists get_battery/is_charging on both the wired class (0x025A) and,
