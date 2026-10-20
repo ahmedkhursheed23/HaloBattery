@@ -109,6 +109,9 @@ class History:
             return
         if d["last"] is not None:
             d["use"] += min(max(now - d["last"], 0.0), MAX_GAP)
+            # the use time is part of the estimate (a level that sits still slows the
+            # rate down), so a restart must keep it too, not only the samples
+            self.dirty = True
         d["last"] = now
         samples = d["samples"]
         if samples and level >= samples[-1][1] + RESET_RISE:

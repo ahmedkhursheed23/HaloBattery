@@ -282,6 +282,20 @@ class HistoryTests(unittest.TestCase):
         self.assertAlmostEqual(again.seconds_left(KEY, 85), h.seconds_left(KEY, 85), delta=1)
         self.assertIsNone(again.devices[KEY]["last"])   # the time the app was closed does not count
 
+    def test_use_without_a_drop_is_saved(self):
+        """Hours at one level slow the estimate down; a restart must not forget them."""
+        folder = tempfile.mkdtemp(prefix="halo_battery_test_")
+        path = os.path.join(folder, "history.json")
+        h = history.History(path)
+        t = self.drain(h, 100, 3, 5, start=time.time() - 7 * H)
+        h.save(force=True)
+        feed(h, [85] * 180, start=t)               # 3 more hours without a drop
+        h.save(force=True)
+        again = history.History(path)
+        again.load()
+        self.assertAlmostEqual(again.devices[KEY]["use"], h.devices[KEY]["use"], delta=1)
+        self.assertAlmostEqual(again.seconds_left(KEY, 85), h.seconds_left(KEY, 85), delta=1)
+
     def test_damaged_file_is_ignored(self):
         folder = tempfile.mkdtemp(prefix="halo_battery_test_")
         path = os.path.join(folder, "history.json")

@@ -25,6 +25,9 @@ and the project follows [Semantic Versioning](https://semver.org/).
   (#236): Windows reports no Bluetooth battery for it, and the icon said only
   "connected". The controller's own coarse level (empty / low / medium / full) is shown
   instead; when Windows does report a Bluetooth level, that one is still used.
+- **The time-left estimate keeps the hours a level sat still across a restart**: the use
+  time was saved only when the level dropped, so after a restart the estimate forgot a
+  long stretch at one level and showed less time left than before.
 
 ## [1.15.0] - 2026-10-12
 
