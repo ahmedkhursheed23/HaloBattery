@@ -78,6 +78,14 @@ Not HID++ on ff43: Logitech's "Centurion" transport on the vendor collection `ff
 
 Its receiver publishes two collections and neither answers the standard Razer mouse request this app sends. The headset speaks the "PA" protocol instead: 64-byte vendor frames, `P`,`A` out and `P`,`I` back, battery command `0x21` with the level in the reply's data byte, charging `0x2A`. Decoded from a USBPcap capture of Razer Synapse on a real unit (it read 34%), then confirmed on hardware with @phl23's own Barracuda Pro: the level tracks (27% at the test), charging follows the charger, and a switched-off headset reports "no link" rather than a stale value. Over Bluetooth Windows reports the level itself.
 
+### Razer Barracuda X (2.4 GHz)
+
+**Connection:** 2.4 GHz dongle (1532:0536 Barracuda X, 1532:0552 X 2.4, 1532:0574 X Chroma)
+
+Same 64-byte feature report `0xFF` on usage page `0xFF00` and the same request (`FF 0A 00 FD 04 12 F1 02 05`) and reply prefix (`FF 0F 05 FE 12 04 1F 08 05`) as the BlackShark V2 Pro (2020), and the app reuses that code. Only the status map differs: byte 9 is the charge status (`0x03` discharging, `0x05` charging, `0x06` full), bytes 12-13 are the battery voltage in mV (big endian) and byte 14 is the level in percent. Unlike the 2020 headset, the level is shown while charging; an unknown status keeps the level and marks charging as unknown. The dongle's reply cache reads `FF 01 00 ...` with no headset linked; that is shown as no reading. The dongle does not answer the 90-byte Razer mouse request (it stalls), so the app does not send it.
+
+Source: [Barracuda_X_Helpers](https://github.com/GigaVibeSlopper67/Barracuda_X_Helpers) (`barracuda_battery.py` and README at commit `0f2038b50e6ec1a0f898b398c567e3b6060aceb8`), a Linux tool whose author validated discharge, charge and full states on 1532:0536. The ids 0552 and 0574 are listed by that project but not described as validated. Not yet confirmed in this app. 1532:0550 (Barracuda X 2.4, issue #264) is not in that project's list and is not routed here until a user confirms it.
+
 ### Razer BlackShark V2 Pro (2020)
 
 **Connection:** 2.4 GHz receiver (1532:0528)

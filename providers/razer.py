@@ -150,7 +150,8 @@ WIRELESS_WORDS = ("hyperspeed", "wireless", "receiver", "dongle", "dock",
 
 def maybe_wireless(pid: int, name: str) -> bool:
     n = name.lower()
-    return pid in KNOWN or pid in blackshark.PA_PIDS or any(w in n for w in WIRELESS_WORDS)
+    return (pid in KNOWN or pid in blackshark.PA_PIDS or pid in blackshark2020.BARRACUDA_X_NAMES
+            or any(w in n for w in WIRELESS_WORDS))
 
 STATUS_OK = 0x02
 STATUS_BUSY = 0x01
@@ -358,7 +359,8 @@ class RazerProvider(Provider):
         for (pid, serial), ifaces in groups.items():
             name, pref_tid = KNOWN.get(pid, (None, None))
             if not name:
-                name = (ifaces[0].get("product_string") or f"Razer {pid:04x}").strip()
+                name = blackshark2020.BARRACUDA_X_NAMES.get(pid) or (
+                    ifaces[0].get("product_string") or f"Razer {pid:04x}").strip()
             key = f"razer:{pid:04x}:{serial}"
             kind = "keyboard" if pid in KEYBOARD_INTERFACE else ""
             diag_from = len(self._diag)
@@ -375,8 +377,12 @@ class RazerProvider(Provider):
                 # providers/barracuda.py reads.
                 self._diag.append("  skipped: read by the barracuda provider (own PA protocol)")
                 continue
-            is_headset = pid in blackshark.PA_PIDS or "blackshark" in name.lower()
-            if pid == blackshark2020.PID:
+            is_headset = (pid in blackshark.PA_PIDS or "blackshark" in name.lower()
+                          or pid in blackshark2020.BARRACUDA_X_NAMES)
+            if pid in blackshark2020.BARRACUDA_X_NAMES:
+                # Same feature report as the 2020 headset; the mouse request STALLs here.
+                st = self._poll_2020(ifaces, blackshark2020.read_battery_barracuda_x, "BarX")
+            elif pid == blackshark2020.PID:
                 # Deliberately no generic/PA fallback: the 0528 hardware rejects
                 # their reads/writes. A missing fresh feature reply means no reading.
                 st = self._poll_2020(ifaces)
@@ -487,15 +493,15 @@ class RazerProvider(Provider):
                 self._dead[path] = now + 300   # leave this interface alone for 5 minutes
         return timeout_hit
 
-    def _poll_2020(self, ifaces):
+    def _poll_2020(self, ifaces, read=None, tag="2020"):
         """Only the 0xFF00 collection accepts the 2020 feature report."""
         offline = None
         for d in ifaces:
             if not blackshark2020.is_candidate(d):
                 continue
             self._diag.append(
-                f"  [2020] iface={d.get('interface_number')} usage=ff00:0001")
-            res, level, charging = blackshark2020.read_battery(d["path"], self._diag)
+                f"  [{tag}] iface={d.get('interface_number')} usage=ff00:0001")
+            res, level, charging = (read or blackshark2020.read_battery)(d["path"], self._diag)
             if res == "ok":
                 return STATUS_OK, level, charging
             if res == "offline":

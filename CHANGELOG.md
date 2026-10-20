@@ -12,6 +12,13 @@ and the project follows [Semantic Versioning](https://semver.org/).
   and CONTRIBUTING.md into `.github/`. The README now fits on one screen; the full list of
   features and settings is in `docs/features.md` and the credits in `docs/credits.md`.
 
+### Added
+- **Razer Barracuda X, X 2.4 and X Chroma (2.4 GHz dongles 1532:0536, 0552, 0574)**
+  (#256, #264): the battery level and charging state are read with the same feature report
+  as the BlackShark V2 Pro (2020), with the Barracuda X status bytes from the public
+  Barracuda_X_Helpers tool (validated there by its author on 0536). Not yet verified in
+  the app; 1532:0550 is left out until a user confirms it.
+
 ### Fixed
 - **Start-up with portable mode no longer hangs in a folder it cannot write to**: the
   check whether the app folder is writable used `tempfile`, which on Windows retries

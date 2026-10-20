@@ -50,6 +50,18 @@ REPLY_PREFIX = bytes.fromhex("ff 0f 05 fe 12 04 1f 08 05")
 # under this header. Never use its stale battery or charging bytes.
 NO_REPLY_PREFIX = bytes.fromhex("ff 01 00 fe 12 04 1f 08 05")
 
+# Razer Barracuda X family dongles: same request and reply prefix, but the
+# charge status is byte 9 (03 discharging, 05 charging, 06 full) and the level is
+# kept while charging. Source: github.com/GigaVibeSlopper67/Barracuda_X_Helpers
+# @ 0f2038b50e6ec1a0f898b398c567e3b6060aceb8 (validated by its author on 0536).
+BARRACUDA_X_NAMES = {
+    0x0536: "Razer Barracuda X",
+    0x0552: "Razer Barracuda X 2.4",
+    0x0574: "Razer Barracuda X Chroma",
+}
+BARRACUDA_X_CHARGING = 0x05
+BARRACUDA_X_NOT_CHARGING = (0x03, 0x06)
+
 
 def is_candidate(info: dict) -> bool:
     return info.get("usage_page") == 0xFF00 and info.get("usage") == 0x01
@@ -69,6 +81,43 @@ def parse_reply(data) -> Optional[Tuple[int, int, int]]:
     return state, voltage, data[14]
 
 
+def _interpret_2020(data, level_byte, diag):
+    """Return (level, charging) for a fresh 2020 reply; state byte is [11]."""
+    state = data[11]
+    # Only infer charging from observed states, not individual bits.
+    # New discharge states must not discard a fresh battery reading.
+    if state == 0x09:
+        charging = True
+    elif state in (0x01, 0x02, 0x03, 0x06):
+        charging = False
+    else:
+        charging = None
+        diag.append(f"    [2020] unknown power state: {state:02x}; "
+                    "keeping fresh reading, charging unknown")
+    level = level_byte if 0 <= level_byte <= 100 else None
+    diag.append(f"    [2020] device-reported level={level}")
+    if charging is True:
+        diag.append("    [2020] level hidden: unreliable during charging")
+        level = None
+    return level, charging
+
+
+def _interpret_barracuda_x(data, level_byte, diag):
+    """Return (level, charging) for a fresh Barracuda X reply; status byte is [9]."""
+    state = data[9]
+    if state == BARRACUDA_X_CHARGING:
+        charging = True
+    elif state in BARRACUDA_X_NOT_CHARGING:
+        charging = False
+    else:
+        charging = None
+        diag.append(f"    [BarX] unknown charge status: {state:02x}; "
+                    "keeping fresh reading, charging unknown")
+    level = level_byte if 0 <= level_byte <= 100 else None
+    diag.append(f"    [BarX] device-reported level={level}")
+    return level, charging
+
+
 def read_battery(path: bytes, diag: List[str]) -> Tuple[str, Optional[int], Optional[bool]]:
     """Return ('ok'|'offline'|'fail', level or None, charging or None).
 
@@ -82,12 +131,21 @@ def read_battery(path: bytes, diag: List[str]) -> Tuple[str, Optional[int], Opti
     0x09 indicates active charging, hide the unreliable level; retain its raw
     byte in diagnostics. Charge-complete state 0x06 uses the reported level.
     """
+    return _read(path, diag, _interpret_2020, "2020")
+
+
+def read_battery_barracuda_x(path: bytes, diag: List[str]) -> Tuple[str, Optional[int], Optional[bool]]:
+    """Same exchange for the Barracuda X dongles; only the status map differs."""
+    return _read(path, diag, _interpret_barracuda_x, "BarX")
+
+
+def _read(path, diag, interpret, tag):
     dev = hid.device()
     try:
         dev.open_path(path)
         written = dev.send_feature_report(REQUEST)
         if written != REPORT_LEN:
-            diag.append(f"    [2020] short feature write: {written}")
+            diag.append(f"    [{tag}] short feature write: {written}")
             return "fail", None, False
         # Synapse waits about 100 ms between SET_REPORT and GET_REPORT.
         # A bounded retry also accommodates a reply that is not ready yet.
@@ -95,38 +153,24 @@ def read_battery(path: bytes, diag: List[str]) -> Tuple[str, Optional[int], Opti
         while True:
             time.sleep(0.1)
             data = dev.get_feature_report(REPORT_ID, REPORT_LEN)
-            diag.append(f"    [2020] feature ff: {hexdump(data, 16)}")
+            diag.append(f"    [{tag}] feature ff: {hexdump(data, 16)}")
             result = parse_reply(data)
             if result is not None:
                 state, voltage, raw14 = result
-                diag.append(f"    [2020] power={state:02x} voltage={voltage}mV "
+                diag.append(f"    [{tag}] power={state:02x} voltage={voltage}mV "
                             f"byte14={raw14:02x}")
                 if voltage == 0:
                     return "offline", None, False
-                # Only infer charging from observed states, not individual bits.
-                # New discharge states must not discard a fresh battery reading.
-                if state == 0x09:
-                    charging = True
-                elif state in (0x01, 0x02, 0x03, 0x06):
-                    charging = False
-                else:
-                    charging = None
-                    diag.append(f"    [2020] unknown power state: {state:02x}; "
-                                "keeping fresh reading, charging unknown")
-                level = raw14 if 0 <= raw14 <= 100 else None
-                diag.append(f"    [2020] device-reported level={level}")
-                if charging is True:
-                    diag.append("    [2020] level hidden: unreliable during charging")
-                    level = None
+                level, charging = interpret(bytes(data), raw14, diag)
                 return "ok", level, charging
             if time.monotonic() >= deadline:
                 if len(data) == REPORT_LEN and bytes(data).startswith(NO_REPLY_PREFIX):
-                    diag.append("    [2020] no fresh headset reply (off / out of range)")
+                    diag.append(f"    [{tag}] no fresh headset reply (off / out of range)")
                     return "offline", None, False
-                diag.append("    [2020] no valid battery reply")
+                diag.append(f"    [{tag}] no valid battery reply")
                 return "fail", None, False
     except (OSError, ValueError) as e:
-        diag.append(f"    [2020] HID: {e}")
+        diag.append(f"    [{tag}] HID: {e}")
         return "fail", None, False
     finally:
         try:
