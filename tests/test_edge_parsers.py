@@ -303,8 +303,7 @@ class AsusTests(unittest.TestCase):
         for n in range(len(frame)):
             with self.subTest(length=n):
                 reading = asus.parse_headset_reply(frame[:n])
-                self.assertTrue(reading is None or reading[0] in (10, 25, 50, 75, 100) or
-                                0 <= reading[0] <= 100)
+                self.assertTrue(reading is None or 0 <= reading[0] <= 100)
 
 
 class AulaTests(unittest.TestCase):
