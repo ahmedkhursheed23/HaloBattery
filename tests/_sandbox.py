@@ -5,7 +5,6 @@ behind in %TEMP%, even for tests that never clean up after themselves.
 """
 import atexit
 import logging
-import os
 import shutil
 import tempfile
 

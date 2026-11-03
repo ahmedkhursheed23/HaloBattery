@@ -225,7 +225,7 @@ class StorageTests(unittest.TestCase):
 
     def test_save_and_load_round_trip(self):
         h = History(self.path)
-        end = drain(h, t0=time.time() - 7000)
+        drain(h, t0=time.time() - 7000)
         h.save(force=True)
         self.assertFalse(os.path.exists(self.path + ".tmp"))
         again = History(self.path)
