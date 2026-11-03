@@ -97,7 +97,8 @@ Look at the open issues and pull requests first, so that two people do not do th
 - `main`: stable, released code only. Tags `vX.Y.Z` are cut from `main`; `.github/workflows/release.yml` builds and publishes on a tag. The app's updater uses `/releases/latest`, so only `main` releases reach users.
 - `pre-release`: integration branch. **All contributions open pull requests against `pre-release`.** They need passing CI and 1 approving review from any maintainer with write access. Squash merge.
 - Release: a maintainer opens a "Release X.Y.Z" pull request from `pre-release` into `main`. It bumps `VERSION` in `halo_battery.pyw` and moves the CHANGELOG `[Unreleased]` section to `[X.Y.Z] - date`. It needs passing CI and approval from a code owner (see `.github/CODEOWNERS`). Merge with a merge commit (not squash), then tag on `main`.
-- Hotfix: branch `hotfix/<name>` from `main`, pull request into `main` (code-owner approval). After the release, merge `main` back into `pre-release`.
+- Hotfix: branch `hotfix/<name>` from `main`, pull request into `main` (code-owner approval).
+- After **every** release or hotfix, merge `main` back into `pre-release` (fast-forward when possible), so the two never drift apart.
 - Test build of `pre-release`: Actions, "Build and release", **Run workflow** on `pre-release`. It makes an artifact and no release.
 
 ```
