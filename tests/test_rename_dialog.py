@@ -24,8 +24,10 @@ class RenameDialogTests(unittest.TestCase):
             hb.ask_name('Écouteurs 🎧 "Bureau"', language=language)
         args = list(capture.call_args.args[0])
         # Each run starts a fresh PowerShell and loads WinForms: ~1 s normally, but 20 s was
-        # not enough once on a loaded machine. A real hang is still caught after 90 s.
-        kwargs = dict(capture.call_args.kwargs, timeout=90)
+        # not enough once on a loaded machine, and a start-up that never reaches the Shown
+        # event (desktop busy or locked at that moment) has been seen. Give each attempt 45 s
+        # and try once more with a fresh process; a real hang still fails after 90 s.
+        kwargs = dict(capture.call_args.kwargs, timeout=45)
         script = args[-1]
         if automatic_variable:
             script = script.replace("$tb", "$input")  # reproduce the reviewed regression
@@ -65,7 +67,10 @@ $form.Dispose()
 if ($script:failed -or $Error.Count) { exit 1 }
 """
         args[-1] = script
-        return real_run(args, **kwargs)
+        try:
+            return real_run(args, **kwargs)
+        except subprocess.TimeoutExpired:
+            return real_run(args, **kwargs)
 
     def test_real_shown_callback_focuses_and_selects_name_in_each_language(self):
         for code in i18n.LANGUAGES:
