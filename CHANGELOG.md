@@ -7,7 +7,7 @@ and the project follows [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- Windows installer `HaloBattery-<version>-setup.exe` (Inno Setup, `installer/HaloBattery.iss`), built with every release and pre-release. It installs per user to `%LOCALAPPDATA%\Programs\HaloBattery` without an admin prompt, adds a Start menu entry, an optional desktop icon and an optional "Start with Windows" entry, and registers an uninstaller in Settings → Apps. Uninstalling closes the app, removes its autostart and notification registry entries, and asks before deleting the settings. The in-app updater keeps working for installed copies and updates the version shown in Settings → Apps.
+- Windows installer `HaloBattery-<version>-setup.exe` (Inno Setup, `installer/HaloBattery.iss`), built with every release and pre-release. It installs per user to `%LOCALAPPDATA%\Programs\HaloBattery` without an admin prompt, adds a Start menu entry, an optional desktop icon and an optional "Start with Windows" entry, and registers an uninstaller in Settings → Apps. Uninstalling closes the app, removes its autostart and notification registry entries, and asks before deleting the settings. Installing any version over another upgrades or repairs the one install in place (one folder, one uninstall entry, no leftover library files); an older setup asks before downgrading, and refuses when run silently unless `/ALLOWDOWNGRADE` is given. The in-app updater keeps working for installed copies and updates the version shown in Settings → Apps.
 
 ## [1.16.0] - 2026-11-04
 

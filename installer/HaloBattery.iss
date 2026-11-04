@@ -69,11 +69,58 @@ Root: HKCU; Subkey: "{#RunKey}"; ValueType: string; ValueName: "HaloBattery"; Va
 [Run]
 Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
 
+[InstallDelete]
+; Upgrade or downgrade: start from a clean library folder, so no file of the old
+; version is left next to the new one (PyInstaller mixes them up).
+Type: filesandordirs; Name: "{app}\_internal"
+
 [UninstallDelete]
 ; The in-app updater can add files that setup never installed.
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+const
+  UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{1E3A3904-9F39-4150-82EA-25D23968E2D6}_is1';
+
+{ Every version shares the AppId, so there is only ever one install, one folder and one
+  uninstall entry: a newer or the same version upgrades or repairs it in place. An older
+  setup asks first; silent (/VERYSILENT) it refuses with exit code 1 unless /ALLOWDOWNGRADE
+  is given. The installed version is read from the uninstall entry, which the app keeps
+  current after an in-app update. }
+function HasParam(const Name: String): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 1 to ParamCount do
+    if CompareText(ParamStr(I), Name) = 0 then
+      Result := True;
+end;
+
+function InitializeSetup(): Boolean;
+var
+  Installed: String;
+  Have, Want: Int64;
+begin
+  Result := True;
+  if not RegQueryStringValue(HKCU, UninstallKey, 'DisplayVersion', Installed) then
+    Exit;
+  if not (StrToVersion(Installed, Have) and StrToVersion('{#AppVersion}', Want)) then
+    Exit;
+  if ComparePackedVersion(Have, Want) <= 0 then
+    Exit;
+  if WizardSilent then
+  begin
+    Result := HasParam('/ALLOWDOWNGRADE');
+    if not Result then
+      Log('Halo Battery ' + Installed + ' is installed; not downgrading to {#AppVersion} without /ALLOWDOWNGRADE');
+  end
+  else
+    Result := MsgBox('Halo Battery ' + Installed + ' is installed, which is newer than {#AppVersion}.' + #13#10 +
+                     'Replace it with the older version? Your settings are kept.',
+                     mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+end;
+
 procedure CloseApp();
 var
   Code: Integer;
