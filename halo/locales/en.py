@@ -79,6 +79,7 @@ MESSAGES = {
     "state.charging": "{state}, charging",
     "state.asleep": "{state} (last known value, device asleep)",
     "provider.ajazz": "AJAZZ mice",
+    "provider.ajazz_kb": "AJAZZ keyboards",
     "provider.atk_keyboard": "ATK V75X keyboard",
     "provider.atk_nearlink": "ATK X1 Nearlink mice",
     "provider.aula": "AULA F87 Pro V2C keyboards",

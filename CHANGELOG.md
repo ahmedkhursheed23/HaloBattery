@@ -4,6 +4,17 @@ All notable changes to Halo Battery are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project follows [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **AJAZZ AK820 Max Ultra** (`0c45:fefc`, 2.4 GHz receiver) - the AK820 Pro's
+  configuration protocol (magic `0xAA`/`0x55`, `GET_DEVICE_INFO` 0x10, level at payload
+  byte 17) tried on this model's vendor collections. That protocol is documented for the
+  Pro, not the Max Ultra, so this is a hypothesis and the build is the experiment.
+  Unverified on hardware; a test build is out for
+  [#256](https://github.com/HeyOkay/HaloBattery/issues/256).
+
 ## [1.16.0] - 2026-11-04
 
 First release of the community fork [ahmedkhursheed23/HaloBattery](https://github.com/ahmedkhursheed23/HaloBattery): every open upstream pull request is integrated (see [HeyOkay/HaloBattery#341](https://github.com/HeyOkay/HaloBattery/issues/341)), plus fixes for open upstream issues. Updates are now checked against this fork.

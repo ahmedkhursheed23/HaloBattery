@@ -79,6 +79,7 @@ MESSAGES = {
     "state.charging": "{state}, en charge",
     "state.asleep": "{state} (dernière valeur connue, périphérique en veille)",
     "provider.ajazz": "Souris AJAZZ",
+    "provider.ajazz_kb": "Claviers AJAZZ",
     "provider.atk_keyboard": "Clavier ATK V75X",
     "provider.atk_nearlink": "Souris ATK X1 Nearlink",
     "provider.aula": "Claviers AULA F87 Pro V2C",

@@ -222,7 +222,26 @@ Same mice protocol: transaction id 0x1F, command class 0x07, command 0x80 answer
 
 The same exchange as the Razer mice above: the 90-byte feature report, command class `0x07`, command `0x80`, transaction ids from OpenRazer's device entries. Pro Click, Pro Click V2 and V2 Vertical, Naga, Viper, DeathAdder, Basilisk, Mamba, Lancehead and others - `KNOWN` in `providers/razer.py` holds the full list. Battery is only read for the models OpenRazer itself reads.
 
-### SteelSeries Aerox 3 Wireless
+### AJAZZ AK820 Max Ultra (2.4 GHz)
+
+`0c45:fefc`, receiver product string `AJAZZ AK820MAX`. Two vendor collections: `ff80:0001` on
+interface 2 and `ff70:0071` on interface 3. The AJAZZ online driver's configuration protocol,
+as documented by [wsclx/ak820pro-modder](https://github.com/wsclx/ak820pro-modder), uses
+64-byte **output** reports, report id 0, magic `0xAA` out / `0x55` back, on the interface-3
+vendor page:
+
+    request   AA 10 00 00 00 ...            0x10 = GET_DEVICE_INFO
+    reply     55 10 .. .. .. .. .. .. <payload>
+    payload   17 = battery %, 18 = charge status (0 discharging, 1 charging)
+
+The payload starts at reply byte 8, so the level is at `reply[25]`.
+
+**Unverified** - the protocol is documented for the AK820 **Pro** (`0c45:8009`, usage pages
+`0xFF67`/`0xFF68`), not for the Max Ultra, so the provider treats the command set as a
+hypothesis: interface 3 first, then any other vendor page, and every reply is written to the
+diagnostics so a wrong offset shows up as data rather than as a guess.
+
+## SteelSeries Aerox 3 Wireless
 
 **Connection:** 2.4 GHz dongle (1038:1838)
 
