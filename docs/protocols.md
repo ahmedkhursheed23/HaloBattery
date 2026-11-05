@@ -508,6 +508,25 @@ same RACE commands wrapped in `02 80 <len> <crcLo> <crcHi> payload` with a CRC-1
 over the whole report and an `'O'`/`'F'` input-report acknowledgement - documented in that
 project, not implemented here until a 0550 unit can test it.
 
+### URX Core75 (2.4 GHz)
+
+**Connection:** 2.4 GHz dongle (36B0:3002, "URX Core75 Wireless")
+
+The dongle exposes the keyboard's **VIA raw HID** channel: usage page `0xFF60`, usage `0x61`,
+interface 1, 32-byte packets, report id 0, custom channel 0. URX HUB (its public web driver)
+reads the battery as VIA custom value **7**:
+
+    request  00 | 08 00 07 00 ...        report id 0, VIA custom get (0x08), channel 0, value 7
+    reply    08 00 07 4c 00 ...           echoed header, then the level: 0x4c = 76 %
+
+The report-id byte is required: without it the keyboard answers `ff 07 ...`. VIA's
+protocol-version read (`01`) answers `01 00 0d`, i.e. version 13, which is what URX HUB
+expects for this model.
+
+**Confirmed on hardware** in the reporter's probe run (#245): the frame above returned 76 %
+on a Core75 on its dongle. The reply carries no charging state - every byte after the level
+was 0 - so the charger is reported as unknown rather than guessed.
+
 ### Logitech (more HID++ 2.0 devices and G-series headsets)
 
 **Connection:** Lightspeed, Unifying or Bolt receiver
