@@ -206,6 +206,41 @@ def _error_note(dev, n) -> str:
         return ""
     return f" ({err})" if err else ""
 
+# Direct USB mode of the original HS80 RGB Wireless (1b1c:0a69). This is
+# distinct from the 0a6b receiver exchange above: it answers command 02 0f on
+# target 08. Protocol/layout: ST1CKEL/HS80_Control docs/PROTOCOL.md and PR #2,
+# measured on real hardware: https://github.com/ST1CKEL/HS80_Control/pull/2
+HS80_USB_PID = 0x0A69
+HS80_CHARGING_CABLE_PID = 0x0A6A  # switched-off headset while connected to USB power
+HS80_USB_INTERFACE = 3
+HS80_USB_USAGE_PAGE = 0xFF42
+HS80_USB_TARGET = 0x08
+HS80_USB_COMMAND_BATTERY = (0x02, 0x0F)
+HS80_USB_REPORT_SIZE = 64
+HS80_USB_READ_ATTEMPTS = 3
+HS80_USB_READ_TIMEOUT_MS = 500
+
+
+def hs80_usb_request(target: int = HS80_USB_TARGET) -> bytes:
+    """Build a 64-byte battery-query report for the HS80 control interface."""
+    return bytes([0x02, target, *HS80_USB_COMMAND_BATTERY]
+                 + [0x00] * (HS80_USB_REPORT_SIZE - 4))
+
+
+def parse_hs80_usb_battery(report, target: int = HS80_USB_TARGET) -> Optional[int]:
+    """Decode a matched HS80 response for target 0x08 (USB) or 0x09 (receiver)."""
+    if not report or len(report) < 6:
+        return None
+    r = list(report)
+    # Report 0x01; response channel is target minus 0x08; command family 0x02, OK.
+    if r[0] != 0x01 or r[1] != target - 0x08 or r[2] != 0x02 or r[3] != 0x00:
+        return None
+    tenths = r[4] | (r[5] << 8)
+    if tenths > 1000:
+        return None
+    return tenths // 10
+
+
 PIDS = {
     0x2A08: "Corsair Void v2 Wireless",
     0x2A02: "Corsair Virtuoso Max Wireless",
@@ -235,6 +270,7 @@ def make_software_mode(endpoint: int) -> List[int]:
 BRAGI_PIDS = {
     0x1B7F: "Corsair Dark Core RGB Pro SE",
     0x2B07: "Corsair K65 PLUS Wireless",
+    0x1BDC: "Corsair M75 Wireless",
     0x0A40: "Corsair Virtuoso RGB Wireless SE",
     0x0A3E: "Corsair Virtuoso RGB Wireless SE",
     0x0A3D: "Corsair Virtuoso RGB Wireless SE",
@@ -243,11 +279,12 @@ BRAGI_PIDS = {
 }
 # the pictogram each family member draws: the Dark Core is a mouse, the K65 PLUS a
 # keyboard; the Virtuoso ids are headsets
-BRAGI_KINDS = {0x1B7F: "mouse", 0x2B07: "keyboard"}
+BRAGI_KINDS = {0x1B7F: "mouse", 0x2B07: "keyboard", 0x1BDC: "mouse"}
 # one icon per product: a headset's receiver and cable ids share the key
 BRAGI_KEYS = {
     0x1B7F: "corsair:1b7f",
     0x2B07: "corsair:2b07",
+    0x1BDC: "corsair:1bdc",
     0x0A40: "corsair:virtuoso-se",
     0x0A3E: "corsair:virtuoso-se",
     0x0A3D: "corsair:virtuoso-se",
@@ -255,6 +292,20 @@ BRAGI_KEYS = {
     0x0A62: "corsair:virtuoso-xt",
 }
 BRAGI_VENDOR_PAGE = 0xFF42       # the dongle's two vendor collections, from the #56 dump
+
+# --- third family: the older Void headsets (HeadsetControl's "rich" Void, 0x0A55) ---
+# The dongle's battery collection is the vendor page 0xFFC5 on interface 3 (HeadsetControl's
+# RichVoidDevice capability detail). The exchange is short: an output report C9 with the
+# byte 64, and a five-byte input report 64 00 <level> B1 <status>. No session, no framing.
+VOID_VENDOR_PAGE = 0xFFC5
+VOID_USAGE = 0x0001
+VOID_REPORT_ID = 0xC9
+VOID_ASK = 0x64                  # the byte after the report id
+VOID_REPLY_ID = 0x64             # the input report the answer arrives in
+VOID_MARKER = 0xB1               # byte 3 of a battery reply
+VOID_STATUS_OFF = 0              # the receiver has no headset on it
+VOID_CHARGING = (4, 5)           # 1 normal, 2 low, 4/5 charging (HeadsetControl)
+VOID_PIDS = {0x0A55: "Corsair Void Elite Wireless"}
 BRAGI_USAGE = 0x0001             # the one that answers; 0x0002 is its notice channel
 BRAGI_MSG_SIZE = 64              # ckb-next: MSG_SIZE (structures.h)
 BRAGI_ROUTE_DONGLE = 0x08        # the receiver itself
@@ -346,6 +397,31 @@ def parse_bragi(reply) -> Optional[int]:
     return value // 10
 
 
+def void_request() -> List[int]:
+    """The battery ask: an output report 0xC9 whose first byte is 0x64."""
+    return [VOID_REPORT_ID, VOID_ASK]
+
+
+def parse_void(reply) -> Optional[Tuple[int, bool]]:
+    """(level, charging) from a Void battery reply, or None.
+
+    The reply is 64 00 <level|mic flag> B1 <status>. A status of 0 means the receiver
+    has no headset on it; 1 and 2 are on-battery (normal and low), 4 and 5 charging.
+    Bit 7 of the level byte is the microphone-lifted flag, not part of the level.
+    """
+    if not reply or len(reply) < 5:
+        return None
+    if reply[0] != VOID_REPLY_ID or reply[3] != VOID_MARKER:
+        return None
+    status = reply[4]
+    if status == VOID_STATUS_OFF:
+        return None
+    level = reply[2] & 0x7F
+    if not 0 <= level <= 100:
+        return None
+    return level, status in VOID_CHARGING
+
+
 def parse_bragi_charge(reply) -> Optional[bool]:
     """True while charging, False on battery, None when not a charge answer.
 
@@ -375,6 +451,51 @@ class CorsairProvider(Provider):
 
     def __init__(self):
         self._diag: List[str] = []
+
+    def _query_hs80_usb(self, infos: List[dict], target: int = HS80_USB_TARGET,
+                         transport_name: str = "USB") -> Optional[int]:
+        """Read battery from the direct USB connection or HS80 wireless receiver."""
+        collections = [d for d in infos
+                      if d.get("interface_number") == HS80_USB_INTERFACE
+                      and d.get("usage_page") == HS80_USB_USAGE_PAGE]
+        collections.sort(key=lambda d: (0 if d.get("usage") == 0x0001 else 1,
+                                        d.get("usage", 0)))
+        if not collections:
+            self._diag.append(f"  HS80 {transport_name}: no interface 3 ff42 collection")
+            return None
+        for d in collections:
+            dev = hid.device()
+            try:
+                dev.open_path(d["path"])
+                self._diag.append(f"  HS80 {transport_name} iface={d.get('interface_number')} "
+                                  f"usage={d.get('usage_page', 0):04x}:{d.get('usage', 0):04x}")
+                # Discard stale reports so they cannot be mistaken for this query.
+                for _ in range(4):
+                    if not dev.read(HS80_USB_REPORT_SIZE, FLUSH_TIMEOUT_MS):
+                        break
+                request = hs80_usb_request(target)
+                written = dev.write(request)
+                if not isinstance(written, int) or written != len(request):
+                    self._diag.append(f"  HS80 {transport_name}: short write ({written!r}/{len(request)})")
+                    continue
+                for attempt in range(HS80_USB_READ_ATTEMPTS):
+                    report = dev.read(HS80_USB_REPORT_SIZE, HS80_USB_READ_TIMEOUT_MS)
+                    if not report:
+                        continue
+                    self._diag.append(f"  HS80 {transport_name} reply {attempt + 1}: {hexdump(report, 12)}")
+                    level = parse_hs80_usb_battery(report, target)
+                    if level is not None:
+                        self._diag.append(f"  HS80 {transport_name} battery: {level}%")
+                        return level
+                self._diag.append(f"  HS80 {transport_name}: no valid battery reply")
+            except (OSError, IOError, ValueError) as e:
+                self._diag.append(f"  HS80 {transport_name} query: {e}")
+            finally:
+                try:
+                    dev.close()
+                except Exception:
+                    pass
+        return None
 
     def _pick(self, infos: List[dict]) -> Optional[dict]:
         for d in infos:
@@ -806,6 +927,44 @@ class CorsairProvider(Provider):
             except Exception:
                 pass
 
+    def _query_void(self, path: bytes) -> Optional[Tuple[int, bool]]:
+        """The older Void exchange: write C9 64, read 64 00 <level> B1 <status>."""
+        dev = hid.device()
+        try:
+            dev.open_path(path)
+        except (OSError, IOError) as e:
+            self._diag.append(f"  open: {e}")
+            return None
+        try:
+            # HeadsetControl writes the two bytes as they are; on Windows a short write
+            # is refused when the descriptor's output report is longer, so the padded
+            # form is tried after it. Both carry the same command.
+            for form in (void_request(), void_request() + [0] * (MSG_SIZE_WRITE - 2)):
+                try:
+                    n = dev.write(form)
+                except (OSError, IOError, ValueError) as e:
+                    self._diag.append(f"  write ({len(form)} bytes): {e}")
+                    continue
+                self._diag.append(f"  [w] ({len(form)} bytes) -> {n}")
+                for _ in range(ATTEMPTS):
+                    r = dev.read(MSG_SIZE_READ, READ_TIMEOUT_MS)
+                    if not r:
+                        break
+                    self._diag.append(f"  reply: {hexdump(r, 6)}")
+                    got = parse_void(r)
+                    if got is not None:
+                        return got
+            self._diag.append("  no battery answer")
+            return None
+        except (OSError, IOError, ValueError) as e:
+            self._diag.append(f"  query error: {e}")
+            return None
+        finally:
+            try:
+                dev.close()
+            except Exception:
+                pass
+
     def poll(self) -> List[DeviceStatus]:
         self._diag = []
         try:
@@ -815,6 +974,34 @@ class CorsairProvider(Provider):
             return []
         out = []
         seen = set()
+        hs80_usb = [d for d in infos if d.get("product_id") == HS80_USB_PID]
+        hs80_cable_present = any(d.get("product_id") in
+                                 (HS80_USB_PID, HS80_CHARGING_CABLE_PID) for d in infos)
+        hs80_found = False
+        if hs80_usb:
+            self._diag.append("[Corsair HS80 USB] original HS80 RGB Wireless, direct USB")
+            level = self._query_hs80_usb(hs80_usb)
+            if level is not None:
+                # The 0a69 identity is the powered-on direct USB mode; the
+                # protocol exposes no charge flag, so cable presence signals charging.
+                out.append(DeviceStatus("corsair:hs80", "Corsair HS80 RGB Wireless",
+                                        level, True, True, "corsair", kind="headset"))
+                hs80_found = True
+        hs80_receiver = [d for d in infos if d.get("product_id") == 0x0A6B]
+        if hs80_receiver and not hs80_found:
+            self._diag.append("[Corsair HS80 receiver] original HS80 RGB Wireless, wireless")
+            level = self._query_hs80_usb(hs80_receiver, target=0x09,
+                                         transport_name="wireless")
+            if level is not None:
+                out.append(DeviceStatus("corsair:hs80", "Corsair HS80 RGB Wireless",
+                                        level, hs80_cable_present, True, "corsair", kind="headset"))
+                hs80_found = True
+        if hs80_cable_present and not hs80_found:
+            # With the headset switched off, USB enumerates as 0a6a and exposes
+            # no battery control collection. Keep the device visible and animate
+            # charging; the charge percentage is unavailable in this state.
+            out.append(DeviceStatus("corsair:hs80", "Corsair HS80 RGB Wireless",
+                                    None, True, True, "corsair", kind="headset"))
         for pid in PIDS:
             mine = [d for d in infos if d["product_id"] == pid and d["path"] not in seen]
             if not mine:
@@ -869,6 +1056,26 @@ class CorsairProvider(Provider):
         for key, (level, charging, name, kind) in found.items():
             out.append(DeviceStatus(key, name, level, charging, True, "corsair",
                                     kind=kind))
+        for pid, name in VOID_PIDS.items():
+            mine = [d for d in infos if d["product_id"] == pid and d["path"] not in seen]
+            if not mine:
+                continue
+            vend = [d for d in mine if d.get("usage_page") == VOID_VENDOR_PAGE]
+            self._diag.append(f"[Corsair void] pid={pid:04x} '{name}'"
+                              + ("" if vend else f" (no {VOID_VENDOR_PAGE:04x} collection)"))
+            for d in sorted(vend or mine,
+                            key=lambda x: (0 if x.get("usage") == VOID_USAGE else 1,
+                                           x.get("interface_number") or 0)):
+                self._diag.append(f"  iface={d.get('interface_number')} "
+                                  f"usage={d.get('usage_page', 0):04x}:{d.get('usage', 0):04x}")
+                seen.add(d["path"])
+                got = self._query_void(d["path"])
+                if got is None:
+                    continue
+                level, charging = got
+                out.append(DeviceStatus(f"corsair:void:{pid:04x}", name, level,
+                                        charging, True, "corsair", kind="headset"))
+                break
         return out
 
     def diagnostics(self) -> List[str]:

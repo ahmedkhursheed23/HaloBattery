@@ -37,7 +37,7 @@ Before you report, do these steps:
 
    The **All HID devices** part is the most important for a device that is not supported: it shows the ids (`VID`, `PID`) and the collections (`usage`) of your device.
 
-Then [open an issue](https://github.com/ahmedkhursheed23/HaloBattery/issues/new?template=device.yml) and:
+Then [open an issue](https://github.com/HeyOkay/HaloBattery/issues/new?template=device.yml) and:
 
 - Write the device name, and how it is connected (receiver, cable or Bluetooth).
 - Drag `diagnostics.txt` into the comment box (type `%APPDATA%\HaloBattery` in the address bar of File Explorer to find it). Do not paste only a part of it.
@@ -99,13 +99,38 @@ Look at the open issues and pull requests first, so that two people do not do th
 - Release: a maintainer opens a "Release X.Y.Z" pull request from `pre-release` into `main`. It bumps `VERSION` in `halo_battery.pyw` and moves the CHANGELOG `[Unreleased]` section to `[X.Y.Z] - date`. It needs passing CI and approval from a code owner (see `.github/CODEOWNERS`). Merge with a merge commit (not squash), then tag on `main`.
 - Hotfix: branch `hotfix/<name>` from `main`, pull request into `main` (code-owner approval).
 - After **every** release or hotfix, merge `main` back into `pre-release` (fast-forward when possible), so the two never drift apart.
-- **Test builds**: every merge into `pre-release` publishes the [Pre-release build](https://github.com/ahmedkhursheed23/HaloBattery/releases/tag/prerelease-build) (`.github/workflows/prerelease.yml`). It is one rolling GitHub release, marked as a pre-release, so the app's updater never offers it. Testers download it there and report bugs with its commit id.
+- **Test builds**: every merge into `pre-release` publishes the [Pre-release build](https://github.com/HeyOkay/HaloBattery/releases/tag/prerelease-build) (`.github/workflows/prerelease.yml`). It is one rolling GitHub release, marked as a pre-release, so the app's updater never offers it. Testers download it there and report bugs with its commit id.
 
 ```
 feat/* fix/* device/* --PR (squash)--> pre-release --release PR (merge commit)--> main --tag vX.Y.Z--> release
                                            ^                                       |
                                            +-------- merge back after release ---- hotfix/* branches from main
 ```
+
+### Weekly manual release review
+
+Once per week, a lead reviews `pre-release` for a possible stable release. This is a
+manual decision: there is no scheduled merge or automatic stable publication. If the
+candidate is not ready, keep testing on `pre-release` and review it the following week.
+
+Before opening the release PR:
+
+1. Read new issue replies, PR review comments and hardware-test results, including
+   follow-ups on the community fork. Record unresolved work in the original tracker.
+2. Check the latest `Tests` run and rolling pre-release build. Test the packaged app
+   and installer, and verify the updater points to `HeyOkay/HaloBattery`.
+3. Review known regressions and experimental device paths. A passing simulated test
+   is not hardware confirmation. Do not promote guessed protocol changes without a
+   named source and the required tester confirmation.
+4. Choose a version newer than every previous stable release, including the community
+   fork's 1.16.0, and prepare the version/changelog change through the release PR.
+5. Obtain another lead's approval, merge the release PR with a merge commit, tag the
+   reviewed commit on `main`, and wait for successful release packaging. Merge `main`
+   back into `pre-release` afterwards.
+
+The [current follow-up register](../docs/maintenance.md) lists the consolidation's
+remaining test evidence and release holds. Resolve or explicitly exclude each hold
+before promoting a candidate.
 
 ## 5. Maintainers
 
@@ -115,4 +140,4 @@ feat/* fix/* device/* --PR (squash)--> pre-release --release PR (merge commit)--
 - Sustained good pull requests and reviews lead to an invitation from the owner.
 - Even leads use pull requests: no direct pushes to `main` or `pre-release`. Only the owner may bypass this in an emergency.
 
-Current leads: `ahmedkhursheed23`, `casparas123` (top contributor) and `HeyOkay` (the upstream author; counts once the invitation is accepted). A lead's pull request into `main` needs approval from another lead.
+Lead reviewers listed in CODEOWNERS: `HeyOkay`, `ahmedkhursheed23` and `casparas123`. Collaborators must accept their invitations and have write access for their code-owner approvals to count. A lead's pull request into `main` needs approval from another lead.
