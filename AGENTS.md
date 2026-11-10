@@ -1,6 +1,6 @@
 # Instructions for AI agents and contributors
 
-Halo Battery: a Windows tray app (Python) that shows the battery level of wireless mice, keyboards, headsets and controllers. This is the community fork `ahmedkhursheed23/HaloBattery`. Human-facing rules are in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md); this file is the short version for agents.
+Halo Battery: a Windows tray app (Python) that shows the battery level of wireless mice, keyboards, headsets and controllers. The canonical repository is `HeyOkay/HaloBattery`. Human-facing rules are in [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md); this file is the short version for agents.
 
 ## Repo map
 
@@ -12,6 +12,7 @@ Halo Battery: a Windows tray app (Python) that shows the battery level of wirele
 - `halo/`: app modules (i18n, icons, flyout, history, updates, whatsnew, winevents) and `locales/`.
 - `tests/`: `unittest`, with fake HID devices. No hardware, no network.
 - `docs/`: `devices.md` (support table), `protocols.md` (how each device is read, with source), `features.md`, `credits.md`.
+- `installer/HaloBattery.iss`: Inno Setup script for the per-user `-setup.exe` (built by the release workflows; its `AppId` must never change).
 - `tools/`, `scripts/`: build and helper scripts. `CHANGELOG.md`: user-visible changes under `[Unreleased]`.
 
 Run the tests from the repo root: `python -m unittest discover -s tests`. Smoke test: `python halo_battery.pyw --probe`.
