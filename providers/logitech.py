@@ -84,7 +84,13 @@ RECEIVERS = {
     0xC52E, 0xC531, 0xC534, 0xC535, 0xC537,
     0xC539, 0xC53A, 0xC53D, 0xC53F, 0xC541, 0xC545, 0xC547,  # Lightspeed
     0xC54D,
+    0xC54F,  # PRO X3 SUPERSTRIKE LIGHTSPEED receiver
 }
+
+# PRO X3 SUPERSTRIKE exposes its HID++ reports on the FF43 vendor page.
+# Limit this fallback to identified PRO X3 receiver/wired product IDs;
+# other Logitech devices must keep their existing collection selection.
+PRO_X3_HIDPP_IDS = {0xC54D, 0xC54F, 0xC0A9}
 
 # headsets with HID++ battery (feature 0x1F20), from HeadsetControl's device list.
 # The value is the name to show when the headset does not report one.
@@ -480,15 +486,24 @@ class LogitechProvider(Provider):
         the same kind (any two Unifying receivers are 0xC52B). A headset has only a long path."""
         groups: Dict[Tuple[int, str], Dict[int, bytes]] = {}
         headset: Dict[Tuple[int, str], bytes] = {}
+        pro_x3: Dict[Tuple[int, str], Dict[int, bytes]] = {}
         for d in infos:
             pid, page, usage = d["product_id"], d.get("usage_page"), d.get("usage")
             key = (pid, _instance(d))
             if page == 0xFF00 and usage in (1, 2):
                 groups.setdefault(key, {})[usage] = d["path"]
+            elif pid in PRO_X3_HIDPP_IDS and page == 0xFF43 and usage in (0x0301, 0x0302):
+                # FF43:0301 supplies short HID++ reports, FF43:0302 long ones.
+                pro_x3.setdefault(key, {})[usage - 0x0300] = d["path"]
             elif pid in HEADSETS and (page, usage) == HEADSET_COLLECTION.get(pid, (0xFF43, 0x0202)):
                 # only the headsets in the list: other devices never got a request on
                 # these collections, and must not get one now
                 headset[key] = d["path"]
+        # Keep the original FF00 collections preferred when they exist.
+        for key, paths in pro_x3.items():
+            dest = groups.setdefault(key, {})
+            for usage, path in paths.items():
+                dest.setdefault(usage, path)
         # the ff00 collections win; the headset collection is used only without them
         for key, path in headset.items():
             if 2 not in groups.get(key, {}):
