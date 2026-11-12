@@ -385,6 +385,16 @@ The transaction Lofree's own web driver (hyzen.lofree.tech) uses, on report 0x04
 
 HID++ 2.0 on the receiver's vendor interface: the device name (feature 0x0005) and the first battery feature the device supports (0x1004 unified battery, 0x1000 battery status or 0x1001 battery voltage; the G502 LIGHTSPEED reports voltage, converted to % with the Li-ion curve used by Solaar, the G502 X PLUS the unified battery percentage). The icon follows the device's unit id (feature 0x0003). Works alongside G HUB
 
+### Logitech G PRO X3 SUPERSTRIKE
+
+**Connection:** LIGHTSPEED receiver (`046D:C54D` or `046D:C54F`), or USB cable (`046D:C0A9`; not yet verified on hardware).
+
+The Logitech HID++ 2.0 provider normally opens the `ff00:0001` (short) and `ff00:0002` (long) vendor collections. The PRO X3 SUPERSTRIKE can use the newer `ff43:0301` (short) and `ff43:0302` (long) collections. For the three product IDs above, `providers/logitech.py` recognizes these additional HID++ paths and uses the existing feature-table battery queries (`0x1004` unified battery, `0x1000` battery status or `0x1001` battery voltage, according to the device). Where `ff00` and `ff43` both exist, `ff00` remains preferred. Other Logitech product IDs are not affected by this fallback.
+
+**Protocol source:** the existing Logitech HID++ implementation in `providers/logitech.py`, based on the HID++ behavior also implemented by [Solaar](https://github.com/pwr-Solaar/Solaar); the PRO X3-specific `ff43` collection selection is documented and covered by `tests/test_pro_x3_superstrike.py`. All commands are reads; no device configuration changes are sent.
+
+**Hardware status:** a Windows user tested an experimental Halo Battery 1.16.0 build with a physical G PRO X3 SUPERSTRIKE and reported that the displayed battery percentage matched Logitech G HUB. The exact receiver/product ID and HID collection selected in that test were not recorded, so the USB cable path, other receivers and firmware variants remain unverified. Five hardware-free regression tests cover the `C54F` and `C54D` receiver paths, `C0A9` wired path, unrelated-product rejection, and `ff00` priority; passing the full upstream test suite has not yet been confirmed. See [PR #53](https://github.com/ahmedkhursheed23/HaloBattery/pull/53).
+
 ### Razer BlackWidow V3 Pro
 
 **Connection:** 2.4 GHz receiver (1532:025C), cable (1532:025A)
